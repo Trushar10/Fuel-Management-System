@@ -106,10 +106,11 @@ export default function FuelCostPage() {
 
   useEffect(() => { loadMasters(); loadEntries(); }, []); // eslint-disable-line
 
-  // Auto-fill fuel rate when date changes
+  // Auto-fill fuel rate: find the latest rate on or before the selected date
   useEffect(() => {
     if (!form.date || editId) return;
-    const match = fuelRates.find(r => r.date === form.date);
+    // fuelRates are sorted by date DESC from API
+    const match = fuelRates.find(r => r.date <= form.date);
     if (match) {
       setForm(prev => ({ ...prev, fuel_rate: match.rate }));
     } else {
@@ -117,7 +118,7 @@ export default function FuelCostPage() {
     }
   }, [form.date, fuelRates, editId]);
 
-  const hasRateForDate = fuelRates.some(r => r.date === form.date);
+  const hasRateForDate = fuelRates.some(r => r.date <= form.date);
 
   const cost = form.fuel_qty && form.fuel_rate
     ? (Number(form.fuel_qty) * Number(form.fuel_rate)).toFixed(2)
@@ -193,7 +194,7 @@ export default function FuelCostPage() {
         <button onClick={() => router.back()} className="p-2 hover:bg-gray-100 rounded-lg">
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <h1 className="text-2xl font-bold text-gray-900">{editId ? 'Edit Fuel Cost Entry' : 'Fuel Cost Entry'}</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{editId ? 'Edit Creditor Record' : 'Creditor Records'}</h1>
       </div>
 
       {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">{error}</div>}
@@ -242,17 +243,17 @@ export default function FuelCostPage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
           </div>
 
-          {/* Fuel Rate (auto-filled, read-only if rate exists for the date) */}
+          {/* Fuel Rate (always auto-filled from master, uneditable) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Fuel Rate (₹/L)
-              {hasRateForDate && <span className="ml-2 text-xs text-green-600 font-normal">auto-filled from master</span>}
+              {hasRateForDate && <span className="ml-2 text-xs text-green-600 font-normal">from master data</span>}
             </label>
-            <input type="number" name="fuel_rate" value={form.fuel_rate} onChange={handleChange}
-              placeholder="0.00" step="0.01" required readOnly={hasRateForDate && !editId}
-              className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm ${hasRateForDate && !editId ? 'bg-gray-100 cursor-not-allowed' : ''}`} />
+            <input type="number" name="fuel_rate" value={form.fuel_rate}
+              placeholder="0.00" step="0.01" required readOnly
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none text-sm bg-gray-100 cursor-not-allowed" />
             {!hasRateForDate && form.date && (
-              <p className="mt-1 text-xs text-amber-600">No rate set for this date. Enter manually or add in Master Data.</p>
+              <p className="mt-1 text-xs text-amber-600">No rate found. Please add a fuel rate in Master Data first.</p>
             )}
           </div>
 
@@ -292,7 +293,7 @@ export default function FuelCostPage() {
       </form>
 
       {/* ── ENTRIES TABLE ─────────────────────────────────── */}
-      <h2 className="text-lg font-semibold text-gray-900 mb-3">Fuel Cost Entries</h2>
+      <h2 className="text-lg font-semibold text-gray-900 mb-3">Creditor Records</h2>
 
       <form onSubmit={e => { e.preventDefault(); loadEntries(); }} className="flex flex-wrap gap-3 mb-4">
         <input type="text" placeholder="Filter by Truck No." value={filterTruck}

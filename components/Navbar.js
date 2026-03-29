@@ -40,7 +40,7 @@ export default function Navbar() {
             </Link>
             <Link href="/fuel-cost" className={linkClass('/fuel-cost')}>
               <IndianRupee className="h-4 w-4" />
-              Fuel Cost
+              Creditor Records
             </Link>
           </div>
         </div>
