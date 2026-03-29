@@ -18,13 +18,13 @@ function AutocompleteField({ label, value, onChange, onSelect, suggestions, plac
 
   return (
     <div ref={ref} className="relative">
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>
       <div className="flex">
         <input
           type="text" value={value} placeholder={placeholder} required={required} readOnly={readOnly}
           onChange={e => { onChange(e.target.value); setOpen(true); }}
           onFocus={() => !readOnly && setOpen(true)}
-          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm ${readOnly ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+          className={`w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-colors ${readOnly ? 'bg-gray-50 cursor-not-allowed' : 'bg-white hover:border-gray-300'}`}
         />
         {value && !readOnly && (
           <button type="button" onClick={() => { onSelect(null); setOpen(false); }} className="ml-1 p-1.5 text-gray-400 hover:text-gray-600">
@@ -33,7 +33,7 @@ function AutocompleteField({ label, value, onChange, onSelect, suggestions, plac
         )}
       </div>
       {open && suggestions.length > 0 && (
-        <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+        <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-100 rounded-xl shadow-xl max-h-48 overflow-y-auto">
           {suggestions.map((s, i) => (
             <li key={i} onClick={() => { onSelect(s); setOpen(false); }}
               className="px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm">{s.label}</li>
@@ -191,23 +191,26 @@ export default function FuelCostPage() {
   return (
     <div className="max-w-5xl mx-auto">
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => router.back()} className="p-2 hover:bg-gray-100 rounded-lg">
+        <button onClick={() => router.back()} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <h1 className="text-2xl font-bold text-gray-900">{editId ? 'Edit Creditor Record' : 'Creditor Records'}</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">{editId ? 'Edit Creditor Record' : 'Creditor Records'}</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Manage fuel cost tracking</p>
+        </div>
       </div>
 
-      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">{error}</div>}
-      {success && <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">{success}</div>}
+      {error && <div className="mb-4 p-3.5 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">{error}</div>}
+      {success && <div className="mb-4 p-3.5 bg-green-50 border border-green-200 text-green-700 rounded-xl text-sm">{success}</div>}
 
       {/* ── FORM ──────────────────────────────────────────── */}
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+      <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6 mb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Date */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Date</label>
             <input type="date" name="date" value={form.date} onChange={handleChange} required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm hover:border-gray-300 transition-colors" />
           </div>
 
           {/* Truck No */}
@@ -238,20 +241,20 @@ export default function FuelCostPage() {
 
           {/* Fuel Qty */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Fuel Qty (Litres)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Fuel Qty (Litres)</label>
             <input type="number" name="fuel_qty" value={form.fuel_qty} onChange={handleChange} placeholder="0" step="0.01" required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm hover:border-gray-300 transition-colors" />
           </div>
 
           {/* Fuel Rate (always auto-filled from master, uneditable) */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Fuel Rate (₹/L)
               {hasRateForDate && <span className="ml-2 text-xs text-green-600 font-normal">from master data</span>}
             </label>
             <input type="number" name="fuel_rate" value={form.fuel_rate}
               placeholder="0.00" step="0.01" required readOnly
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none text-sm bg-gray-100 cursor-not-allowed" />
+              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl outline-none text-sm bg-gray-50 cursor-not-allowed" />
             {!hasRateForDate && form.date && (
               <p className="mt-1 text-xs text-amber-600">No rate found. Please add a fuel rate in Master Data first.</p>
             )}
@@ -272,20 +275,20 @@ export default function FuelCostPage() {
         </div>
 
         {/* Cost preview */}
-        <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+        <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
           <p className="text-sm font-medium text-blue-700 mb-1">Total Cost</p>
-          <p className="text-2xl font-bold text-blue-900">{cost ? `₹ ${Number(cost).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '—'}</p>
+          <p className="text-3xl font-bold text-blue-900">{cost ? `₹ ${Number(cost).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '—'}</p>
         </div>
 
         <div className="flex gap-3 mt-6">
           <button type="submit" disabled={loading}
-            className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50">
+            className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white py-2.5 rounded-xl font-medium hover:bg-blue-700 disabled:opacity-50 shadow-lg shadow-blue-600/20 transition-all">
             <Save className="h-4 w-4" />
             {loading ? 'Saving...' : editId ? 'Update Entry' : 'Save Entry'}
           </button>
           {editId && (
             <button type="button" onClick={resetForm}
-              className="px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50">
+              className="px-4 py-2.5 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors">
               Cancel
             </button>
           )}
@@ -293,16 +296,16 @@ export default function FuelCostPage() {
       </form>
 
       {/* ── ENTRIES TABLE ─────────────────────────────────── */}
-      <h2 className="text-lg font-semibold text-gray-900 mb-3">Creditor Records</h2>
+      <h2 className="text-lg font-semibold text-gray-900 mb-4">Creditor Records</h2>
 
       <form onSubmit={e => { e.preventDefault(); loadEntries(); }} className="flex flex-wrap gap-3 mb-4">
         <input type="text" placeholder="Filter by Truck No." value={filterTruck}
           onChange={e => setFilterTruck(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+          className="px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 hover:border-gray-300 transition-colors" />
         <input type="text" placeholder="Filter by Driver" value={filterDriver}
           onChange={e => setFilterDriver(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
-        <button type="submit" className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200">
+          className="px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 hover:border-gray-300 transition-colors" />
+        <button type="submit" className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors">
           <Search className="h-4 w-4" /> Search
         </button>
       </form>
@@ -312,32 +315,32 @@ export default function FuelCostPage() {
       ) : entries.length === 0 ? (
         <div className="text-center py-12 text-gray-400 text-sm">No fuel cost entries yet.</div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
+                <tr className="bg-gray-50/80 border-b border-gray-100">
                   {['Date', 'Truck No.', 'Driver', 'Fuel (L)', 'Rate (₹)', 'Cost (₹)', 'Place', 'Actions'].map(h => (
-                    <th key={h} className={`px-4 py-3 font-semibold text-gray-600 ${['Fuel (L)', 'Rate (₹)', 'Cost (₹)'].includes(h) ? 'text-right' : h === 'Actions' ? 'text-center' : 'text-left'}`}>{h}</th>
+                    <th key={h} className={`px-4 py-3.5 font-semibold text-xs uppercase tracking-wide text-gray-500 ${['Fuel (L)', 'Rate (₹)', 'Cost (₹)'].includes(h) ? 'text-right' : h === 'Actions' ? 'text-center' : 'text-left'}`}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {entries.map((entry, i) => (
-                  <tr key={entry.id} className={`border-b border-gray-100 hover:bg-gray-50 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
-                    <td className="px-4 py-3">{fmtDate(entry.date)}</td>
-                    <td className="px-4 py-3 font-medium">{entry.truck_no}</td>
-                    <td className="px-4 py-3">{entry.driver_name}</td>
-                    <td className="px-4 py-3 text-right">{entry.fuel_qty} L</td>
-                    <td className="px-4 py-3 text-right">₹{Number(entry.fuel_rate).toFixed(2)}</td>
-                    <td className="px-4 py-3 text-right font-medium">₹{Number(entry.cost).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                    <td className="px-4 py-3">{entry.filling_place}</td>
-                    <td className="px-4 py-3">
+                {entries.map((entry) => (
+                  <tr key={entry.id} className="hover:bg-blue-50/30 transition-colors">
+                    <td className="px-4 py-3.5 text-gray-600">{fmtDate(entry.date)}</td>
+                    <td className="px-4 py-3.5 font-semibold text-gray-900">{entry.truck_no}</td>
+                    <td className="px-4 py-3.5 text-gray-700">{entry.driver_name}</td>
+                    <td className="px-4 py-3.5 text-right text-gray-700">{entry.fuel_qty} L</td>
+                    <td className="px-4 py-3.5 text-right text-gray-600">₹{Number(entry.fuel_rate).toFixed(2)}</td>
+                    <td className="px-4 py-3.5 text-right font-semibold text-gray-900">₹{Number(entry.cost).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-4 py-3.5 text-gray-600">{entry.filling_place}</td>
+                    <td className="px-4 py-3.5">
                       <div className="flex items-center justify-center gap-1">
-                        <button onClick={() => startEdit(entry)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg">
+                        <button onClick={() => startEdit(entry)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors">
                           <Pencil className="h-4 w-4" />
                         </button>
-                        <button onClick={() => handleDelete(entry.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg">
+                        <button onClick={() => handleDelete(entry.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors">
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>

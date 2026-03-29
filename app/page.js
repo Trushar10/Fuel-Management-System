@@ -1,24 +1,44 @@
 'use client';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
-import { Fuel, Truck, Users, TrendingUp, Route, ListChecks } from 'lucide-react';
+import { Fuel, Truck, Users, TrendingUp, Route, ListChecks, PlusCircle, ArrowRight } from 'lucide-react';
 
 const PIE_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#84cc16'];
 
-function StatCard({ icon: Icon, label, value, sub, color }) {
+const STAT_CONFIG = [
+  { key: 'total_entries', label: 'Total Entries', icon: ListChecks, gradient: 'from-blue-500 to-blue-600' },
+  { key: 'total_fuel', label: 'Total Fuel (L)', icon: Fuel, gradient: 'from-orange-500 to-orange-600' },
+  { key: 'total_distance', label: 'Distance (km)', icon: Route, gradient: 'from-emerald-500 to-emerald-600' },
+  { key: 'avg_mileage', label: 'Avg Mileage', icon: TrendingUp, gradient: 'from-violet-500 to-violet-600', suffix: ' km/L' },
+  { key: 'total_trucks', label: 'Trucks', icon: Truck, gradient: 'from-cyan-500 to-cyan-600' },
+  { key: 'total_drivers', label: 'Drivers', icon: Users, gradient: 'from-pink-500 to-pink-600' },
+];
+
+function StatCard({ icon: Icon, label, value, gradient }) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex items-center gap-4">
-      <div className={`flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center ${color}`}>
-        <Icon className="w-6 h-6 text-white" />
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5 hover:shadow-md transition-shadow duration-200">
+      <div className="flex items-start justify-between">
+        <div className="min-w-0">
+          <p className="text-xs sm:text-sm text-gray-500 font-medium truncate">{label}</p>
+          <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{value ?? '—'}</p>
+        </div>
+        <div className={`flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-lg`}>
+          <Icon className="w-5 h-5 text-white" />
+        </div>
       </div>
-      <div>
-        <p className="text-sm text-gray-500">{label}</p>
-        <p className="text-2xl font-bold text-gray-900">{value ?? '—'}</p>
-        {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
-      </div>
+    </div>
+  );
+}
+
+function ChartCard({ title, children }) {
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5 hover:shadow-md transition-shadow duration-200">
+      <h2 className="text-sm font-semibold text-gray-800 mb-4">{title}</h2>
+      {children}
     </div>
   );
 }
@@ -50,81 +70,105 @@ export default function Dashboard() {
     });
   }, []);
 
-  if (loading) return <div className="flex items-center justify-center h-64 text-gray-500">Loading dashboard…</div>;
-  if (error) return <div className="flex items-center justify-center h-64 text-red-500">Error: {error}</div>;
+  if (loading) return (
+    <div className="flex items-center justify-center h-64">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm text-gray-500">Loading dashboard...</p>
+      </div>
+    </div>
+  );
+  if (error) return (
+    <div className="flex items-center justify-center h-64">
+      <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
+        <p className="text-red-600 font-medium">Error: {error}</p>
+      </div>
+    </div>
+  );
 
   const isEmpty = !summary || Number(summary.total_entries) === 0;
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <a href="/add" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
-          + Add Entry
-        </a>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Fleet fuel consumption overview</p>
+        </div>
+        <div className="flex gap-2">
+          <Link href="/entries" className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
+            <ListChecks className="h-4 w-4" /> View Entries
+          </Link>
+          <Link href="/add" className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-blue-700 shadow-lg shadow-blue-600/20 transition-all">
+            <PlusCircle className="h-4 w-4" /> Add Entry
+          </Link>
+        </div>
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-        <StatCard icon={ListChecks} label="Total Entries"   value={summary?.total_entries}   color="bg-blue-500" />
-        <StatCard icon={Fuel}       label="Total Fuel (L)"  value={summary?.total_fuel}       color="bg-orange-500" />
-        <StatCard icon={Route}      label="Distance (km)"   value={summary?.total_distance}   color="bg-green-500" />
-        <StatCard icon={TrendingUp} label="Avg Mileage"     value={summary?.avg_mileage ? `${summary.avg_mileage} km/L` : '—'} color="bg-purple-500" />
-        <StatCard icon={Truck}      label="Trucks"          value={summary?.total_trucks}     color="bg-cyan-500" />
-        <StatCard icon={Users}      label="Drivers"         value={summary?.total_drivers}    color="bg-pink-500" />
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+        {STAT_CONFIG.map(({ key, label, icon, gradient, suffix }) => (
+          <StatCard
+            key={key} icon={icon} label={label} gradient={gradient}
+            value={summary?.[key] ? `${summary[key]}${suffix || ''}` : '—'}
+          />
+        ))}
       </div>
 
       {isEmpty ? (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-16 text-center">
-          <p className="text-gray-500 mb-4">No fuel entries yet. Add one to see your charts.</p>
-          <a href="/add" className="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">Add First Entry</a>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 sm:p-16 text-center">
+          <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Fuel className="w-8 h-8 text-blue-600" />
+          </div>
+          <p className="text-gray-600 mb-1 font-medium">No fuel entries yet</p>
+          <p className="text-sm text-gray-400 mb-6">Add your first entry to see charts and analytics</p>
+          <Link href="/add" className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-blue-700 shadow-lg shadow-blue-600/20 transition-all">
+            <PlusCircle className="h-4 w-4" /> Add First Entry
+          </Link>
         </div>
       ) : (
         <>
           {/* Row 1: Fuel per Truck + Mileage Trend */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-              <h2 className="text-base font-semibold text-gray-800 mb-4">Fuel Filled per Truck (L)</h2>
+            <ChartCard title="Fuel Filled per Truck (L)">
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={byTruck} margin={{ top: 4, right: 8, left: 0, bottom: 40 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis dataKey="truck_no" tick={{ fontSize: 12 }} angle={-30} textAnchor="end" interval={0} />
                   <YAxis tick={{ fontSize: 12 }} />
-                  <Tooltip formatter={(v) => [`${v} L`, 'Fuel']} />
-                  <Bar dataKey="total_fuel" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0' }} formatter={(v) => [`${v} L`, 'Fuel']} />
+                  <Bar dataKey="total_fuel" fill="#3b82f6" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-              <h2 className="text-base font-semibold text-gray-800 mb-4">Mileage Trend (km/L)</h2>
+            </ChartCard>
+            <ChartCard title="Mileage Trend (km/L)">
               <ResponsiveContainer width="100%" height={260}>
                 <LineChart data={trend} margin={{ top: 4, right: 8, left: 0, bottom: 40 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis dataKey="date" tick={{ fontSize: 11 }} angle={-30} textAnchor="end" interval="preserveStartEnd" />
                   <YAxis tick={{ fontSize: 12 }} unit=" km/L" />
-                  <Tooltip formatter={(v) => [`${v} km/L`, 'Mileage']} />
-                  <Line type="monotone" dataKey="mileage" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                  <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0' }} formatter={(v) => [`${v} km/L`, 'Mileage']} />
+                  <Line type="monotone" dataKey="mileage" stroke="#10b981" strokeWidth={2.5} dot={{ r: 3, fill: '#10b981' }} activeDot={{ r: 6 }} />
                 </LineChart>
               </ResponsiveContainer>
-            </div>
+            </ChartCard>
           </div>
 
           {/* Row 2: Avg Mileage per Truck + Fuel by Driver Pie */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-              <h2 className="text-base font-semibold text-gray-800 mb-4">Avg Mileage per Truck (km/L)</h2>
+            <ChartCard title="Avg Mileage per Truck (km/L)">
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={byTruck} margin={{ top: 4, right: 8, left: 0, bottom: 40 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis dataKey="truck_no" tick={{ fontSize: 12 }} angle={-30} textAnchor="end" interval={0} />
                   <YAxis tick={{ fontSize: 12 }} />
-                  <Tooltip formatter={(v) => [`${v} km/L`, 'Avg Mileage']} />
-                  <Bar dataKey="avg_mileage" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                  <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0' }} formatter={(v) => [`${v} km/L`, 'Avg Mileage']} />
+                  <Bar dataKey="avg_mileage" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-              <h2 className="text-base font-semibold text-gray-800 mb-4">Fuel Distribution by Driver</h2>
+            </ChartCard>
+            <ChartCard title="Fuel Distribution by Driver">
               <ResponsiveContainer width="100%" height={260}>
                 <PieChart>
                   <Pie
@@ -141,25 +185,24 @@ export default function Dashboard() {
                       <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(v) => [`${v} L`, 'Fuel']} />
+                  <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0' }} formatter={(v) => [`${v} L`, 'Fuel']} />
                 </PieChart>
               </ResponsiveContainer>
-            </div>
+            </ChartCard>
           </div>
 
           {/* Row 3: Distance per Truck */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-            <h2 className="text-base font-semibold text-gray-800 mb-4">Total Distance per Truck (km)</h2>
+          <ChartCard title="Total Distance per Truck (km)">
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={byTruck} margin={{ top: 4, right: 8, left: 0, bottom: 40 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis dataKey="truck_no" tick={{ fontSize: 12 }} angle={-30} textAnchor="end" interval={0} />
                 <YAxis tick={{ fontSize: 12 }} unit=" km" />
-                <Tooltip formatter={(v) => [`${v} km`, 'Distance']} />
-                <Bar dataKey="total_distance" fill="#10b981" radius={[4, 4, 0, 0]} />
+                <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0' }} formatter={(v) => [`${v} km`, 'Distance']} />
+                <Bar dataKey="total_distance" fill="#10b981" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
-          </div>
+          </ChartCard>
         </>
       )}
     </div>

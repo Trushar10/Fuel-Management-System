@@ -23,13 +23,13 @@ function AutocompleteField({ label, value, onChange, onSelect, suggestions, plac
 
   return (
     <div ref={ref} className="relative">
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>
       <div className="flex">
         <input
           type="text" value={value} placeholder={placeholder} required={required} readOnly={readOnly}
           onChange={e => { onChange(e.target.value); setOpen(true); }}
           onFocus={() => !readOnly && setOpen(true)}
-          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm ${readOnly ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+          className={`w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-colors ${readOnly ? 'bg-gray-50 cursor-not-allowed' : 'bg-white hover:border-gray-300'}`}
         />
         {value && !readOnly && (
           <button type="button" onClick={() => { onSelect(null); setOpen(false); }} className="ml-1 p-1.5 text-gray-400 hover:text-gray-600">
@@ -38,10 +38,10 @@ function AutocompleteField({ label, value, onChange, onSelect, suggestions, plac
         )}
       </div>
       {open && suggestions.length > 0 && (
-        <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+        <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-100 rounded-xl shadow-xl max-h-48 overflow-y-auto">
           {suggestions.map((s, i) => (
             <li key={i} onClick={() => { onSelect(s); setOpen(false); }}
-              className="px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm">{s.label}</li>
+              className="px-3.5 py-2.5 hover:bg-blue-50 cursor-pointer text-sm first:rounded-t-xl last:rounded-b-xl">{s.label}</li>
           ))}
         </ul>
       )}
@@ -165,26 +165,29 @@ export default function FuelForm({ id }) {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => router.back()} className="p-2 hover:bg-gray-100 rounded-lg">
+        <button onClick={() => router.back()} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <h1 className="text-2xl font-bold text-gray-900">{isEdit ? 'Edit Fuel Entry' : 'Add Fuel Entry'}</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">{isEdit ? 'Edit Fuel Entry' : 'Add Fuel Entry'}</h1>
+          <p className="text-sm text-gray-500 mt-0.5">{isEdit ? 'Update the entry details' : 'Record a new fuel filling'}</p>
+        </div>
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">{error}</div>
+        <div className="mb-4 p-3.5 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">{error}</div>
       )}
       {success && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">{success}</div>
+        <div className="mb-4 p-3.5 bg-green-50 border border-green-200 text-green-700 rounded-xl text-sm">{success}</div>
       )}
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Date */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Date of Filling</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Date of Filling</label>
             <input type="date" name="date" value={form.date} onChange={handleChange} required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" />
+              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm hover:border-gray-300 transition-colors" />
           </div>
 
           {/* Vehicle (autocomplete) */}
@@ -217,31 +220,31 @@ export default function FuelForm({ id }) {
 
           {/* Driver Phone (auto-filled, read-only when driver selected) */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Driver Phone No.</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Driver Phone No.</label>
             <input type="tel" name="driver_phone" value={form.driver_phone} placeholder="e.g. 9876543210"
               onChange={handleChange} required readOnly={driverLocked}
-              className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm ${driverLocked ? 'bg-gray-100 cursor-not-allowed' : ''}`} />
+              className={`w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-colors ${driverLocked ? 'bg-gray-50 cursor-not-allowed' : 'hover:border-gray-300'}`} />
           </div>
 
           {/* Start KM */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Start Kilometer</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Start Kilometer</label>
             <input type="number" name="start_km" value={form.start_km} onChange={handleChange} placeholder="0" required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" />
+              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm hover:border-gray-300 transition-colors" />
           </div>
 
           {/* End KM */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">End Kilometer</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">End Kilometer</label>
             <input type="number" name="end_km" value={form.end_km} onChange={handleChange} placeholder="0" required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" />
+              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm hover:border-gray-300 transition-colors" />
           </div>
 
           {/* Fuel Qty */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Fuel Quantity (Litres)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Fuel Quantity (Litres)</label>
             <input type="number" name="fuel_qty" value={form.fuel_qty} onChange={handleChange} placeholder="0" step="0.01" required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" />
+              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm hover:border-gray-300 transition-colors" />
           </div>
 
           {/* Filling Place (autocomplete) */}
@@ -260,19 +263,19 @@ export default function FuelForm({ id }) {
         </div>
 
         {/* Auto-calculated preview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 p-4 bg-blue-50 rounded-lg">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
           <div>
             <p className="text-sm font-medium text-blue-700 mb-1">Distance Travelled (km)</p>
-            <p className="text-2xl font-bold text-blue-900">{distance !== '' ? distance : '—'}</p>
+            <p className="text-3xl font-bold text-blue-900">{distance !== '' ? distance : '—'}</p>
           </div>
           <div>
             <p className="text-sm font-medium text-blue-700 mb-1">Mileage (km/L)</p>
-            <p className="text-2xl font-bold text-blue-900">{mileage || '—'}</p>
+            <p className="text-3xl font-bold text-blue-900">{mileage || '—'}</p>
           </div>
         </div>
 
         <button type="submit" disabled={loading}
-          className="mt-6 w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors">
+          className="mt-6 w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 disabled:opacity-50 shadow-lg shadow-blue-600/20 transition-all">
           <Save className="h-4 w-4" />
           {loading ? 'Saving...' : isEdit ? 'Update Entry' : 'Save Entry'}
         </button>
@@ -282,41 +285,41 @@ export default function FuelForm({ id }) {
       {!isEdit && recentEntries.length > 0 && (
         <div className="mt-8">
           <h2 className="text-lg font-semibold text-gray-900 mb-3">Recent Entries</h2>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="px-4 py-2.5 text-left font-semibold text-gray-600">Date</th>
-                    <th className="px-4 py-2.5 text-left font-semibold text-gray-600">Truck No.</th>
-                    <th className="px-4 py-2.5 text-left font-semibold text-gray-600">Driver</th>
-                    <th className="px-4 py-2.5 text-right font-semibold text-gray-600">Fuel (L)</th>
-                    <th className="px-4 py-2.5 text-right font-semibold text-gray-600">Distance</th>
-                    <th className="px-4 py-2.5 text-right font-semibold text-gray-600">Mileage</th>
-                    <th className="px-4 py-2.5 text-left font-semibold text-gray-600">Place</th>
+                  <tr className="bg-gray-50/80 border-b border-gray-100">
+                    <th className="px-4 py-3 text-left font-semibold text-xs uppercase tracking-wide text-gray-500">Date</th>
+                    <th className="px-4 py-3 text-left font-semibold text-xs uppercase tracking-wide text-gray-500">Truck No.</th>
+                    <th className="px-4 py-3 text-left font-semibold text-xs uppercase tracking-wide text-gray-500">Driver</th>
+                    <th className="px-4 py-3 text-right font-semibold text-xs uppercase tracking-wide text-gray-500">Fuel (L)</th>
+                    <th className="px-4 py-3 text-right font-semibold text-xs uppercase tracking-wide text-gray-500">Distance</th>
+                    <th className="px-4 py-3 text-right font-semibold text-xs uppercase tracking-wide text-gray-500">Mileage</th>
+                    <th className="px-4 py-3 text-left font-semibold text-xs uppercase tracking-wide text-gray-500">Place</th>
                   </tr>
                 </thead>
                 <tbody>
                   {recentEntries.map((entry, i) => (
-                    <tr key={entry.id} className={`border-b border-gray-100 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
-                      <td className="px-4 py-2.5">{entry.date}</td>
-                      <td className="px-4 py-2.5 font-medium">{entry.truck_no}</td>
-                      <td className="px-4 py-2.5">{entry.driver_name}</td>
-                      <td className="px-4 py-2.5 text-right">{entry.fuel_qty} L</td>
-                      <td className="px-4 py-2.5 text-right">{Number(entry.distance).toLocaleString()} km</td>
-                      <td className="px-4 py-2.5 text-right">
-                        <span className={`inline-block px-2 py-0.5 rounded text-xs font-bold ${entry.mileage >= 4 ? 'bg-green-100 text-green-800' : entry.mileage >= 2.5 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
+                    <tr key={entry.id} className="hover:bg-blue-50/30 transition-colors">
+                      <td className="px-4 py-3">{entry.date}</td>
+                      <td className="px-4 py-3 font-semibold text-gray-900">{entry.truck_no}</td>
+                      <td className="px-4 py-3">{entry.driver_name}</td>
+                      <td className="px-4 py-3 text-right">{entry.fuel_qty} L</td>
+                      <td className="px-4 py-3 text-right">{Number(entry.distance).toLocaleString()} km</td>
+                      <td className="px-4 py-3 text-right">
+                        <span className={`inline-block px-2.5 py-1 rounded-lg text-xs font-bold ${entry.mileage >= 4 ? 'bg-emerald-50 text-emerald-700' : entry.mileage >= 2.5 ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700'}`}>
                           {entry.mileage} km/L
                         </span>
                       </td>
-                      <td className="px-4 py-2.5">{entry.filling_place}</td>
+                      <td className="px-4 py-3">{entry.filling_place}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           </div>
-          <Link href="/entries" className="mt-3 flex items-center justify-center gap-2 bg-gray-100 text-gray-700 py-2.5 rounded-lg font-medium hover:bg-gray-200 transition-colors text-sm">
+          <Link href="/entries" className="mt-3 flex items-center justify-center gap-2 bg-gray-50 text-gray-700 py-2.5 rounded-xl font-medium hover:bg-gray-100 transition-colors text-sm border border-gray-100">
             <Eye className="h-4 w-4" /> View All Entries
           </Link>
         </div>
