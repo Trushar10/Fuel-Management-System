@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Pencil, Trash2, Search, PlusCircle } from 'lucide-react';
 
+function fmtDate(d) { if (!d) return ''; const [y,m,dd] = d.split('-'); return `${dd}/${m}/${y}`; }
+
 export default function EntriesPage() {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -74,7 +76,7 @@ export default function EntriesPage() {
               <tbody>
                 {entries.map((entry, i) => (
                   <tr key={entry.id} className={`border-b border-gray-100 hover:bg-gray-50 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
-                    <td className="px-4 py-3">{entry.date}</td>
+                    <td className="px-4 py-3">{fmtDate(entry.date)}</td>
                     <td className="px-4 py-3 font-medium">{entry.truck_no}</td>
                     <td className="px-4 py-3">{entry.driver_name}</td>
                     <td className="px-4 py-3">{entry.driver_phone}</td>

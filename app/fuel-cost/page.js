@@ -3,6 +3,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Save, ArrowLeft, X, Pencil, Trash2, Search } from 'lucide-react';
 
+function fmtDate(d) { if (!d) return ''; const [y,m,dd] = d.split('-'); return `${dd}/${m}/${y}`; }
+
 /* ── Autocomplete dropdown ────────────────────────────────── */
 function AutocompleteField({ label, value, onChange, onSelect, suggestions, placeholder, required, readOnly }) {
   const [open, setOpen] = useState(false);
@@ -106,19 +108,17 @@ export default function FuelCostPage() {
 
   useEffect(() => { loadMasters(); loadEntries(); }, []); // eslint-disable-line
 
-  // Auto-fill fuel rate: find the latest rate on or before the selected date
+  // Auto-fill fuel rate: find the closest rate (prefer on-or-before, fallback to nearest after)
   useEffect(() => {
     if (!form.date || editId) return;
-    // fuelRates are sorted by date DESC from API
-    const match = fuelRates.find(r => r.date <= form.date);
-    if (match) {
-      setForm(prev => ({ ...prev, fuel_rate: match.rate }));
-    } else {
-      setForm(prev => ({ ...prev, fuel_rate: '' }));
-    }
+    if (fuelRates.length === 0) { setForm(prev => ({ ...prev, fuel_rate: '' })); return; }
+    // fuelRates sorted by date DESC from API
+    const onOrBefore = fuelRates.find(r => r.date <= form.date);
+    const match = onOrBefore || fuelRates[fuelRates.length - 1]; // fallback to earliest rate
+    setForm(prev => ({ ...prev, fuel_rate: match.rate }));
   }, [form.date, fuelRates, editId]);
 
-  const hasRateForDate = fuelRates.some(r => r.date <= form.date);
+  const hasRateForDate = fuelRates.length > 0;
 
   const cost = form.fuel_qty && form.fuel_rate
     ? (Number(form.fuel_qty) * Number(form.fuel_rate)).toFixed(2)
@@ -325,7 +325,7 @@ export default function FuelCostPage() {
               <tbody>
                 {entries.map((entry, i) => (
                   <tr key={entry.id} className={`border-b border-gray-100 hover:bg-gray-50 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
-                    <td className="px-4 py-3">{entry.date}</td>
+                    <td className="px-4 py-3">{fmtDate(entry.date)}</td>
                     <td className="px-4 py-3 font-medium">{entry.truck_no}</td>
                     <td className="px-4 py-3">{entry.driver_name}</td>
                     <td className="px-4 py-3 text-right">{entry.fuel_qty} L</td>
