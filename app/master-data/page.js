@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Plus, Pencil, Trash2, X, Check, Users, Truck, MapPin } from 'lucide-react';
+import { ArrowLeft, Plus, Pencil, Trash2, X, Check, Users, Truck, MapPin, IndianRupee } from 'lucide-react';
 
 function MasterSection({ title, icon: Icon, items, fields, apiUrl, onReload }) {
   const [adding, setAdding] = useState(false);
@@ -120,18 +120,21 @@ export default function MasterDataPage() {
   const [drivers, setDrivers] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [places, setPlaces] = useState([]);
+  const [fuelRates, setFuelRates] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
-    const [d, v, p] = await Promise.all([
+    const [d, v, p, fr] = await Promise.all([
       fetch('/api/drivers').then(r => r.json()),
       fetch('/api/vehicles').then(r => r.json()),
       fetch('/api/filling-places').then(r => r.json()),
+      fetch('/api/fuel-rates').then(r => r.json()),
     ]);
     if (Array.isArray(d)) setDrivers(d);
     if (Array.isArray(v)) setVehicles(v);
     if (Array.isArray(p)) setPlaces(p);
+    if (Array.isArray(fr)) setFuelRates(fr);
     setLoading(false);
   }, []);
 
@@ -168,6 +171,13 @@ export default function MasterDataPage() {
             title="Filling Places" icon={MapPin} items={places} apiUrl="/api/filling-places" onReload={loadAll}
             fields={[
               { name: 'name', placeholder: 'Place name (e.g. Mumbai HP Pump)', bold: true },
+            ]}
+          />
+          <MasterSection
+            title="Fuel Rates" icon={IndianRupee} items={fuelRates} apiUrl="/api/fuel-rates" onReload={loadAll}
+            fields={[
+              { name: 'date', placeholder: 'Date (YYYY-MM-DD)', bold: true },
+              { name: 'rate', placeholder: 'Rate per litre (e.g. 89.50)' },
             ]}
           />
         </div>
