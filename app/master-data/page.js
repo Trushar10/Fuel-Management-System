@@ -101,7 +101,7 @@ function MasterSection({ title, icon: Icon, items, fields, apiUrl, onReload }) {
               <>
                 <div className="flex-1 flex items-center gap-3">
                   {fields.map(f => (
-                    <span key={f.name} className={`text-sm ${f.bold ? 'font-medium text-gray-900' : 'text-gray-600'}`}>{item[f.name]}</span>
+                    <span key={f.name} className={`text-sm ${f.bold ? 'font-medium text-gray-900' : 'text-gray-600'}`}>{f.format ? f.format(item[f.name]) : item[f.name]}</span>
                   ))}
                 </div>
                 <button onClick={() => startEdit(item)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"><Pencil className="h-4 w-4" /></button>
@@ -176,7 +176,7 @@ export default function MasterDataPage() {
           <MasterSection
             title="Fuel Rates" icon={IndianRupee} items={fuelRates} apiUrl="/api/fuel-rates" onReload={loadAll}
             fields={[
-              { name: 'date', placeholder: 'Date (YYYY-MM-DD)', bold: true },
+              { name: 'date', placeholder: 'Date (DD/MM/YYYY)', bold: true, format: d => { if (!d) return ''; const [y,m,dd] = d.split('-'); return `${dd}/${m}/${y}`; } },
               { name: 'rate', placeholder: 'Rate per litre (e.g. 89.50)' },
             ]}
           />

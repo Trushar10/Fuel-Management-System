@@ -38,7 +38,7 @@ export default function Navbar() {
               <Database className="h-4 w-4" />
               Master Data
             </Link>
-            <Link href="/fuel-cost" className={linkClass('/fuel-cost')}>
+            <Link href="/creditor-records" className={linkClass('/creditor-records')}>
               <IndianRupee className="h-4 w-4" />
               Creditor Records
             </Link>
