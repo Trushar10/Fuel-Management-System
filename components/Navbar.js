@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Fuel, LayoutDashboard, Table2, PlusCircle } from 'lucide-react';
+import { Fuel, LayoutDashboard, Table2, PlusCircle, Database } from 'lucide-react';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -33,6 +33,10 @@ export default function Navbar() {
             <Link href="/add" className={linkClass('/add')}>
               <PlusCircle className="h-4 w-4" />
               Add Entry
+            </Link>
+            <Link href="/master-data" className={linkClass('/master-data')}>
+              <Database className="h-4 w-4" />
+              Master Data
             </Link>
           </div>
         </div>

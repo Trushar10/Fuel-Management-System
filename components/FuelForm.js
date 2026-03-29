@@ -1,14 +1,53 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Save, ArrowLeft, Eye } from 'lucide-react';
+import { Save, ArrowLeft, Eye, X } from 'lucide-react';
 
 const empty = {
   date: new Date().toISOString().split('T')[0],
   truck_no: '', driver_phone: '', driver_name: '',
   start_km: '', fuel_qty: '', end_km: '', filling_place: '',
 };
+
+/* ── Autocomplete dropdown component ────────────────────────── */
+function AutocompleteField({ label, value, onChange, onSelect, suggestions, placeholder, required, readOnly }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <div className="flex">
+        <input
+          type="text" value={value} placeholder={placeholder} required={required} readOnly={readOnly}
+          onChange={e => { onChange(e.target.value); setOpen(true); }}
+          onFocus={() => !readOnly && setOpen(true)}
+          className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm ${readOnly ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+        />
+        {value && !readOnly && (
+          <button type="button" onClick={() => { onSelect(null); setOpen(false); }} className="ml-1 p-1.5 text-gray-400 hover:text-gray-600">
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+      {open && suggestions.length > 0 && (
+        <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+          {suggestions.map((s, i) => (
+            <li key={i} onClick={() => { onSelect(s); setOpen(false); }}
+              className="px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm">{s.label}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 export default function FuelForm({ id }) {
   const router = useRouter();
@@ -19,13 +58,40 @@ export default function FuelForm({ id }) {
   const [recentEntries, setRecentEntries] = useState([]);
   const isEdit = Boolean(id);
 
+  // Master data lists
+  const [drivers, setDrivers] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
+  const [places, setPlaces] = useState([]);
+
+  // Track whether fields are locked via master selection
+  const [driverLocked, setDriverLocked] = useState(false);
+  const [vehicleLocked, setVehicleLocked] = useState(false);
+  const [placeLocked, setPlaceLocked] = useState(false);
+
+  // Typed search text (when not locked)
+  const [driverSearch, setDriverSearch] = useState('');
+  const [vehicleSearch, setVehicleSearch] = useState('');
+  const [placeSearch, setPlaceSearch] = useState('');
+
   const loadRecent = () => {
     fetch('/api/fuel-entries')
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setRecentEntries(data.slice(0, 10)); });
   };
 
-  useEffect(() => { loadRecent(); }, []);
+  const loadMasters = () => {
+    Promise.all([
+      fetch('/api/drivers').then(r => r.json()),
+      fetch('/api/vehicles').then(r => r.json()),
+      fetch('/api/filling-places').then(r => r.json()),
+    ]).then(([d, v, p]) => {
+      if (Array.isArray(d)) setDrivers(d);
+      if (Array.isArray(v)) setVehicles(v);
+      if (Array.isArray(p)) setPlaces(p);
+    });
+  };
+
+  useEffect(() => { loadRecent(); loadMasters(); }, []);
 
   useEffect(() => {
     if (isEdit) {
@@ -38,6 +104,12 @@ export default function FuelForm({ id }) {
             driver_name: data.driver_name, start_km: data.start_km, fuel_qty: data.fuel_qty,
             end_km: data.end_km, filling_place: data.filling_place,
           });
+          setDriverSearch(data.driver_name);
+          setVehicleSearch(data.truck_no);
+          setPlaceSearch(data.filling_place);
+          setDriverLocked(true);
+          setVehicleLocked(true);
+          setPlaceLocked(true);
         });
     }
   }, [id, isEdit]);
@@ -47,12 +119,19 @@ export default function FuelForm({ id }) {
   const mileage = distance !== '' && Number(form.fuel_qty) > 0
     ? (distance / Number(form.fuel_qty)).toFixed(2) : '';
 
-  const handleChange = e => { setForm({ ...form, [e.target.name]: e.target.value }); setError(''); };
+  const handleChange = e => { setForm({ ...form, [e.target.name]: e.target.value }); setError(''); setSuccess(''); };
+
+  const resetForm = () => {
+    setForm(empty);
+    setDriverSearch(''); setVehicleSearch(''); setPlaceSearch('');
+    setDriverLocked(false); setVehicleLocked(false); setPlaceLocked(false);
+  };
 
   const handleSubmit = async e => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccess('');
     try {
       const url = isEdit ? `/api/fuel-entries/${id}` : '/api/fuel-entries';
       const method = isEdit ? 'PUT' : 'POST';
@@ -60,23 +139,28 @@ export default function FuelForm({ id }) {
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Failed'); return; }
       setSuccess(isEdit ? 'Entry updated successfully!' : 'Entry saved successfully!');
-      if (!isEdit) setForm(empty);
+      if (!isEdit) resetForm();
       loadRecent();
     } finally {
       setLoading(false);
     }
   };
 
-  const fields = [
-    { name: 'date',         label: 'Date of Filling',       type: 'date' },
-    { name: 'truck_no',     label: 'Truck No.',              type: 'text',   placeholder: 'e.g. MH-12-AB-1234' },
-    { name: 'driver_name',  label: 'Driver Name',            type: 'text',   placeholder: 'Enter driver name' },
-    { name: 'driver_phone', label: 'Driver Phone No.',       type: 'tel',    placeholder: 'e.g. 9876543210' },
-    { name: 'start_km',     label: 'Start Kilometer',        type: 'number', placeholder: '0' },
-    { name: 'end_km',       label: 'End Kilometer',          type: 'number', placeholder: '0' },
-    { name: 'fuel_qty',     label: 'Fuel Quantity (Litres)', type: 'number', placeholder: '0', step: '0.01' },
-    { name: 'filling_place',label: 'Place of Filling',       type: 'text',   placeholder: 'e.g. Mumbai HP Pump' },
-  ];
+  // ── Filtered suggestion builders ──
+  const driverSuggestions = driverSearch && !driverLocked
+    ? drivers.filter(d => d.name.toLowerCase().includes(driverSearch.toLowerCase()))
+        .map(d => ({ label: `${d.name} — ${d.phone}`, value: d }))
+    : [];
+
+  const vehicleSuggestions = vehicleSearch && !vehicleLocked
+    ? vehicles.filter(v => v.number.toLowerCase().includes(vehicleSearch.toLowerCase()))
+        .map(v => ({ label: `${v.number} — ${v.brand}`, value: v }))
+    : [];
+
+  const placeSuggestions = placeSearch && !placeLocked
+    ? places.filter(p => p.name.toLowerCase().includes(placeSearch.toLowerCase()))
+        .map(p => ({ label: p.name, value: p }))
+    : [];
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -90,23 +174,89 @@ export default function FuelForm({ id }) {
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">{error}</div>
       )}
-
       {success && (
         <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">{success}</div>
       )}
 
       <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {fields.map(f => (
-            <div key={f.name}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{f.label}</label>
-              <input
-                type={f.type} name={f.name} value={form[f.name]} onChange={handleChange}
-                placeholder={f.placeholder} step={f.step} required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
-              />
-            </div>
-          ))}
+          {/* Date */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Date of Filling</label>
+            <input type="date" name="date" value={form.date} onChange={handleChange} required
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" />
+          </div>
+
+          {/* Vehicle (autocomplete) */}
+          <AutocompleteField
+            label="Truck No." value={vehicleSearch} placeholder="e.g. MH-12-AB-1234" required
+            readOnly={vehicleLocked}
+            onChange={val => { setVehicleSearch(val); setForm({ ...form, truck_no: val }); setSuccess(''); }}
+            suggestions={vehicleSuggestions}
+            onSelect={s => {
+              if (s === null) { setVehicleSearch(''); setVehicleLocked(false); setForm({ ...form, truck_no: '' }); return; }
+              setVehicleSearch(s.value.number);
+              setVehicleLocked(true);
+              setForm({ ...form, truck_no: s.value.number });
+            }}
+          />
+
+          {/* Driver Name (autocomplete) */}
+          <AutocompleteField
+            label="Driver Name" value={driverSearch} placeholder="Enter driver name" required
+            readOnly={driverLocked}
+            onChange={val => { setDriverSearch(val); setForm({ ...form, driver_name: val, driver_phone: '' }); setSuccess(''); }}
+            suggestions={driverSuggestions}
+            onSelect={s => {
+              if (s === null) { setDriverSearch(''); setDriverLocked(false); setForm({ ...form, driver_name: '', driver_phone: '' }); return; }
+              setDriverSearch(s.value.name);
+              setDriverLocked(true);
+              setForm({ ...form, driver_name: s.value.name, driver_phone: s.value.phone });
+            }}
+          />
+
+          {/* Driver Phone (auto-filled, read-only when driver selected) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Driver Phone No.</label>
+            <input type="tel" name="driver_phone" value={form.driver_phone} placeholder="e.g. 9876543210"
+              onChange={handleChange} required readOnly={driverLocked}
+              className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm ${driverLocked ? 'bg-gray-100 cursor-not-allowed' : ''}`} />
+          </div>
+
+          {/* Start KM */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Start Kilometer</label>
+            <input type="number" name="start_km" value={form.start_km} onChange={handleChange} placeholder="0" required
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" />
+          </div>
+
+          {/* End KM */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">End Kilometer</label>
+            <input type="number" name="end_km" value={form.end_km} onChange={handleChange} placeholder="0" required
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" />
+          </div>
+
+          {/* Fuel Qty */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Fuel Quantity (Litres)</label>
+            <input type="number" name="fuel_qty" value={form.fuel_qty} onChange={handleChange} placeholder="0" step="0.01" required
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" />
+          </div>
+
+          {/* Filling Place (autocomplete) */}
+          <AutocompleteField
+            label="Place of Filling" value={placeSearch} placeholder="e.g. Mumbai HP Pump" required
+            readOnly={placeLocked}
+            onChange={val => { setPlaceSearch(val); setForm({ ...form, filling_place: val }); setSuccess(''); }}
+            suggestions={placeSuggestions}
+            onSelect={s => {
+              if (s === null) { setPlaceSearch(''); setPlaceLocked(false); setForm({ ...form, filling_place: '' }); return; }
+              setPlaceSearch(s.value.name);
+              setPlaceLocked(true);
+              setForm({ ...form, filling_place: s.value.name });
+            }}
+          />
         </div>
 
         {/* Auto-calculated preview */}
