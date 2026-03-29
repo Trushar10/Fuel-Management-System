@@ -60,8 +60,8 @@ export default function FuelForm({ id }) {
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Failed'); return; }
       setSuccess(isEdit ? 'Entry updated successfully!' : 'Entry saved successfully!');
+      if (!isEdit) setForm(empty);
       loadRecent();
-      setTimeout(() => { router.push('/entries'); router.refresh(); }, 1200);
     } finally {
       setLoading(false);
     }
