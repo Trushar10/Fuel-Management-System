@@ -158,6 +158,7 @@ export default function MasterDataPage() {
             fields={[
               { name: 'name', placeholder: 'Driver name', bold: true },
               { name: 'phone', placeholder: 'Phone number' },
+              { name: 'company', placeholder: 'Company name' },
             ]}
           />
           <MasterSection
@@ -165,6 +166,7 @@ export default function MasterDataPage() {
             fields={[
               { name: 'number', placeholder: 'Vehicle number (e.g. MH-12-AB-1234)', bold: true },
               { name: 'brand', placeholder: 'Brand name' },
+              { name: 'company', placeholder: 'Company name' },
             ]}
           />
           <MasterSection
