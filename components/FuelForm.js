@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
+import { Save, ArrowLeft, Eye } from 'lucide-react';
 
 const empty = {
   date: new Date().toISOString().split('T')[0],
@@ -13,8 +14,18 @@ export default function FuelForm({ id }) {
   const router = useRouter();
   const [form, setForm] = useState(empty);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [recentEntries, setRecentEntries] = useState([]);
   const isEdit = Boolean(id);
+
+  const loadRecent = () => {
+    fetch('/api/fuel-entries')
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setRecentEntries(data.slice(0, 10)); });
+  };
+
+  useEffect(() => { loadRecent(); }, []);
 
   useEffect(() => {
     if (isEdit) {
@@ -48,8 +59,9 @@ export default function FuelForm({ id }) {
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Failed'); return; }
-      router.push('/entries');
-      router.refresh();
+      setSuccess(isEdit ? 'Entry updated successfully!' : 'Entry saved successfully!');
+      loadRecent();
+      setTimeout(() => { router.push('/entries'); router.refresh(); }, 1200);
     } finally {
       setLoading(false);
     }
@@ -77,6 +89,10 @@ export default function FuelForm({ id }) {
 
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">{error}</div>
+      )}
+
+      {success && (
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">{success}</div>
       )}
 
       <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -111,6 +127,50 @@ export default function FuelForm({ id }) {
           {loading ? 'Saving...' : isEdit ? 'Update Entry' : 'Save Entry'}
         </button>
       </form>
+
+      {/* Recent Entries */}
+      {!isEdit && recentEntries.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">Recent Entries</h2>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="px-4 py-2.5 text-left font-semibold text-gray-600">Date</th>
+                    <th className="px-4 py-2.5 text-left font-semibold text-gray-600">Truck No.</th>
+                    <th className="px-4 py-2.5 text-left font-semibold text-gray-600">Driver</th>
+                    <th className="px-4 py-2.5 text-right font-semibold text-gray-600">Fuel (L)</th>
+                    <th className="px-4 py-2.5 text-right font-semibold text-gray-600">Distance</th>
+                    <th className="px-4 py-2.5 text-right font-semibold text-gray-600">Mileage</th>
+                    <th className="px-4 py-2.5 text-left font-semibold text-gray-600">Place</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentEntries.map((entry, i) => (
+                    <tr key={entry.id} className={`border-b border-gray-100 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
+                      <td className="px-4 py-2.5">{entry.date}</td>
+                      <td className="px-4 py-2.5 font-medium">{entry.truck_no}</td>
+                      <td className="px-4 py-2.5">{entry.driver_name}</td>
+                      <td className="px-4 py-2.5 text-right">{entry.fuel_qty} L</td>
+                      <td className="px-4 py-2.5 text-right">{Number(entry.distance).toLocaleString()} km</td>
+                      <td className="px-4 py-2.5 text-right">
+                        <span className={`inline-block px-2 py-0.5 rounded text-xs font-bold ${entry.mileage >= 4 ? 'bg-green-100 text-green-800' : entry.mileage >= 2.5 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
+                          {entry.mileage} km/L
+                        </span>
+                      </td>
+                      <td className="px-4 py-2.5">{entry.filling_place}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <Link href="/entries" className="mt-3 flex items-center justify-center gap-2 bg-gray-100 text-gray-700 py-2.5 rounded-lg font-medium hover:bg-gray-200 transition-colors text-sm">
+            <Eye className="h-4 w-4" /> View All Entries
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
