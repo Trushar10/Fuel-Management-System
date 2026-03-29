@@ -12,7 +12,7 @@ function MasterSection({ title, icon: Icon, items, fields, apiUrl, onReload }) {
 
   const startAdd = () => {
     const empty = {};
-    fields.forEach(f => { empty[f.name] = ''; });
+    fields.forEach(f => { empty[f.name] = f.defaultValue || ''; });
     setForm(empty);
     setAdding(true);
     setEditId(null);
@@ -72,7 +72,7 @@ function MasterSection({ title, icon: Icon, items, fields, apiUrl, onReload }) {
         {adding && (
           <div className="flex items-center gap-2 px-5 py-3 bg-blue-50">
             {fields.map(f => (
-              <input key={f.name} type="text" placeholder={f.placeholder} value={form[f.name] || ''}
+              <input key={f.name} type={f.type || 'text'} placeholder={f.placeholder} value={form[f.name] || ''}
                 onChange={e => setForm({ ...form, [f.name]: e.target.value })}
                 className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
             ))}
@@ -90,7 +90,7 @@ function MasterSection({ title, icon: Icon, items, fields, apiUrl, onReload }) {
             {editId === item.id ? (
               <>
                 {fields.map(f => (
-                  <input key={f.name} type="text" value={form[f.name] || ''}
+                  <input key={f.name} type={f.type || 'text'} value={form[f.name] || ''}
                     onChange={e => setForm({ ...form, [f.name]: e.target.value })}
                     className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
                 ))}
@@ -176,7 +176,7 @@ export default function MasterDataPage() {
           <MasterSection
             title="Fuel Rates" icon={IndianRupee} items={fuelRates} apiUrl="/api/fuel-rates" onReload={loadAll}
             fields={[
-              { name: 'date', placeholder: 'Date (DD/MM/YYYY)', bold: true, format: d => { if (!d) return ''; const [y,m,dd] = d.split('-'); return `${dd}/${m}/${y}`; } },
+              { name: 'date', placeholder: 'Date', bold: true, type: 'date', defaultValue: new Date().toISOString().split('T')[0], format: d => { if (!d) return ''; const [y,m,dd] = d.split('-'); return `${dd}/${m}/${y}`; } },
               { name: 'rate', placeholder: 'Rate per litre (e.g. 89.50)' },
             ]}
           />
