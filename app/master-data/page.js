@@ -103,7 +103,14 @@ function MasterSection({ title, icon, items, fields, apiUrl, onReload }) {
         {adding && (
           <div className="master-item" style={{ background: 'rgba(245,166,35,0.05)' }}>
             <div style={{ display: 'flex', gap: 8, flex: 1 }}>
-              {fields.map(f => (
+              {fields.map(f => f.options ? (
+                <select key={f.name} value={form[f.name] || ''} required
+                  onChange={e => setForm({ ...form, [f.name]: e.target.value })}
+                  className="fc-input" style={{ flex: 1, padding: '6px 10px', fontSize: 12 }}>
+                  <option value="">{f.placeholder}</option>
+                  {f.options.map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
+              ) : (
                 <input key={f.name} type={f.type || 'text'} placeholder={f.placeholder} value={form[f.name] || ''}
                   inputMode={f.inputMode || undefined}
                   maxLength={f.maxLength || undefined}
@@ -132,7 +139,14 @@ function MasterSection({ title, icon, items, fields, apiUrl, onReload }) {
             {editId === item.id ? (
               <>
                 <div style={{ display: 'flex', gap: 8, flex: 1 }}>
-                  {fields.map(f => (
+                  {fields.map(f => f.options ? (
+                    <select key={f.name} value={form[f.name] || ''} required
+                      onChange={e => setForm({ ...form, [f.name]: e.target.value })}
+                      className="fc-input" style={{ flex: 1, padding: '6px 10px', fontSize: 12 }}>
+                      <option value="">{f.placeholder}</option>
+                      {f.options.map(o => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                  ) : (
                     <input key={f.name} type={f.type || 'text'} value={form[f.name] || ''}
                       inputMode={f.inputMode || undefined}
                       maxLength={f.maxLength || undefined}
@@ -180,20 +194,26 @@ export default function MasterDataPage() {
   const [vehicles, setVehicles] = useState([]);
   const [places, setPlaces] = useState([]);
   const [fuelRates, setFuelRates] = useState([]);
+  const [companies, setCompanies] = useState([]);
+  const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
-    const [d, v, p, fr] = await Promise.all([
+    const [d, v, p, fr, c, l] = await Promise.all([
       fetch('/api/drivers').then(r => r.json()),
       fetch('/api/vehicles').then(r => r.json()),
       fetch('/api/filling-places').then(r => r.json()),
       fetch('/api/fuel-rates').then(r => r.json()),
+      fetch('/api/companies').then(r => r.json()),
+      fetch('/api/locations').then(r => r.json()),
     ]);
     if (Array.isArray(d)) setDrivers(d);
     if (Array.isArray(v)) setVehicles(v);
     if (Array.isArray(p)) setPlaces(p);
     if (Array.isArray(fr)) setFuelRates(fr);
+    if (Array.isArray(c)) setCompanies(c);
+    if (Array.isArray(l)) setLocations(l);
     setLoading(false);
   }, []);
 
@@ -222,7 +242,7 @@ export default function MasterDataPage() {
               fields={[
                 { name: 'name', placeholder: 'Driver name', bold: true, transform: titleCase },
                 { name: 'phone', placeholder: 'Phone number', inputMode: 'numeric', maxLength: 10, transform: phoneOnly },
-                { name: 'company', placeholder: 'Company name', transform: titleCase },
+                { name: 'company', placeholder: 'Select company', options: companies.map(c => c.name) },
               ]}
             />
             <MasterSection
@@ -237,6 +257,18 @@ export default function MasterDataPage() {
               title="Filling Places" icon="⛽" items={places} apiUrl="/api/filling-places" onReload={loadAll}
               fields={[
                 { name: 'name', placeholder: 'Place name', bold: true, transform: titleCase },
+              ]}
+            />
+            <MasterSection
+              title="Company Names" icon="🏢" items={companies} apiUrl="/api/companies" onReload={loadAll}
+              fields={[
+                { name: 'name', placeholder: 'Company name', bold: true, transform: titleCase },
+              ]}
+            />
+            <MasterSection
+              title="Locations" icon="📍" items={locations} apiUrl="/api/locations" onReload={loadAll}
+              fields={[
+                { name: 'name', placeholder: 'Location name', bold: true, transform: titleCase },
               ]}
             />
             <MasterSection
