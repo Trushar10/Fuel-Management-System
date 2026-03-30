@@ -6,13 +6,6 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 
-const KPI_CONFIG = [
-  { key: 'total_fuel', label: 'Total Fuel', unit: ' L', color: 'orange', icon: '⛽', dot: 'var(--accent)' },
-  { key: 'total_trips', label: 'Trips', color: 'green', icon: '🚛', dot: 'var(--green)' },
-  { key: 'total_distance', label: 'Distance', unit: ' km', color: 'blue', icon: '📍', dot: 'var(--blue)' },
-  { key: 'avg_mileage', label: 'Avg Mileage', unit: ' km/L', color: 'purple', icon: '📊', dot: 'var(--purple)' },
-];
-
 function getCurrentMonth() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -176,25 +169,6 @@ export default function Dashboard() {
           <div className="loading-spinner"><div className="spinner" /></div>
         ) : (
           <>
-            {/* KPI Cards */}
-            <div className="kpi-grid">
-              {KPI_CONFIG.map(({ key, label, unit, color, icon, dot }) => (
-                <div key={key} className={`kpi-card ${color}`}>
-                  <div className="kpi-label">
-                    <span className="dot" style={{ background: dot }} />
-                    {label}
-                  </div>
-                  <div className="kpi-value">
-                    {summary?.[key] ? `${Number(summary[key]).toLocaleString()}` : '—'}
-                    {summary?.[key] && unit && (
-                      <span style={{ fontSize: 14, fontWeight: 400, color: 'var(--muted)' }}>{unit}</span>
-                    )}
-                  </div>
-                  <div className="kpi-icon">{icon}</div>
-                </div>
-              ))}
-            </div>
-
             {isEmpty ? (
               <div className="form-card" style={{ textAlign: 'center', padding: '60px' }}>
                 <div style={{ fontSize: 48, marginBottom: 16, opacity: 0.3 }}>⛽</div>
@@ -206,18 +180,18 @@ export default function Dashboard() {
               </div>
             ) : (
               <>
-                {/* Daily Fuel Usage Chart */}
+                {/* Daily Avg Mileage Trend — First */}
                 <div className="chart-card" style={{ marginBottom: 16 }}>
                   <div className="chart-header">
                     <div>
-                      <div className="chart-title">Daily Fuel Usage (L)</div>
+                      <div className="chart-title">Daily Avg Mileage (km/L)</div>
                       <div className="chart-sub">{formatMonthLabel(month)} — {data.days_in_month} days</div>
                     </div>
                   </div>
                   <ResponsiveContainer width="100%" height={280}>
-                    <BarChart data={daily} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
+                    <LineChart data={daily.filter(d => d.avg_mileage > 0)} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                      <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#6b7280' }} interval={0} />
+                      <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#6b7280' }} />
                       <YAxis tick={{ fontSize: 10, fill: '#6b7280' }} />
                       <Tooltip
                         contentStyle={tooltipStyle}
@@ -225,18 +199,44 @@ export default function Dashboard() {
                           const d = daily.find(x => x.day === day);
                           return d ? d.date : `Day ${day}`;
                         }}
-                        formatter={(v, name) => {
-                          if (name === 'total_fuel') return [`${v} L`, 'Fuel'];
-                          return [v, name];
-                        }}
+                        formatter={(v) => [`${v} km/L`, 'Mileage']}
                       />
-                      <Bar dataKey="total_fuel" fill="#f5a623" radius={[3, 3, 0, 0]} />
-                    </BarChart>
+                      <Line type="monotone" dataKey="avg_mileage" stroke="#a78bfa" strokeWidth={2} dot={{ r: 3, fill: '#a78bfa' }} />
+                    </LineChart>
                   </ResponsiveContainer>
                 </div>
 
-                {/* Charts Row */}
+                {/* Charts Row — Fuel Usage (left) + Distance (right) */}
                 <div className="charts-row">
+                  {/* Daily Fuel Usage Chart */}
+                  <div className="chart-card">
+                    <div className="chart-header">
+                      <div>
+                        <div className="chart-title">Daily Fuel Usage (L)</div>
+                        <div className="chart-sub">{formatMonthLabel(month)}</div>
+                      </div>
+                    </div>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <BarChart data={daily} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                        <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#6b7280' }} interval={0} />
+                        <YAxis tick={{ fontSize: 10, fill: '#6b7280' }} />
+                        <Tooltip
+                          contentStyle={tooltipStyle}
+                          labelFormatter={(day) => {
+                            const d = daily.find(x => x.day === day);
+                            return d ? d.date : `Day ${day}`;
+                          }}
+                          formatter={(v, name) => {
+                            if (name === 'total_fuel') return [`${v} L`, 'Fuel'];
+                            return [v, name];
+                          }}
+                        />
+                        <Bar dataKey="total_fuel" fill="#f5a623" radius={[3, 3, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+
                   {/* Daily Distance Chart */}
                   <div className="chart-card">
                     <div className="chart-header">
@@ -260,32 +260,6 @@ export default function Dashboard() {
                         />
                         <Bar dataKey="total_distance" fill="#4fa3ff" radius={[3, 3, 0, 0]} />
                       </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  {/* Daily Mileage Trend */}
-                  <div className="chart-card">
-                    <div className="chart-header">
-                      <div>
-                        <div className="chart-title">Daily Avg Mileage (km/L)</div>
-                        <div className="chart-sub">{formatMonthLabel(month)}</div>
-                      </div>
-                    </div>
-                    <ResponsiveContainer width="100%" height={220}>
-                      <LineChart data={daily.filter(d => d.avg_mileage > 0)} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                        <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#6b7280' }} />
-                        <YAxis tick={{ fontSize: 10, fill: '#6b7280' }} />
-                        <Tooltip
-                          contentStyle={tooltipStyle}
-                          labelFormatter={(day) => {
-                            const d = daily.find(x => x.day === day);
-                            return d ? d.date : `Day ${day}`;
-                          }}
-                          formatter={(v) => [`${v} km/L`, 'Mileage']}
-                        />
-                        <Line type="monotone" dataKey="avg_mileage" stroke="#a78bfa" strokeWidth={2} dot={{ r: 3, fill: '#a78bfa' }} />
-                      </LineChart>
                     </ResponsiveContainer>
                   </div>
                 </div>
