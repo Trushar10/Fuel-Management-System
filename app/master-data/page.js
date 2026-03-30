@@ -65,6 +65,9 @@ function MasterSection({ title, icon, items, fields, apiUrl, onReload }) {
     // Validate phone fields (10 digits)
     const phoneField = fields.find(f => f.inputMode === 'numeric');
     if (phoneField && form[phoneField.name].length !== 10) { showToast('Phone number must be 10 digits', 'error'); return; }
+    // Validate suggestion fields match master data
+    const badSuggest = fields.find(f => f.suggestions && !f.suggestions.some(s => s.toLowerCase() === String(form[f.name]).trim().toLowerCase()));
+    if (badSuggest) { showToast(`${badSuggest.placeholder} must be selected from existing master data`, 'error'); return; }
     setSaving(true);
     try {
       const url = editId ? `${apiUrl}/${editId}` : apiUrl;
