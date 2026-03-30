@@ -7,14 +7,14 @@ export async function PUT(request, { params }) {
     const id = parseInt(rawId, 10);
     if (isNaN(id)) return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
 
-    const { name } = await request.json();
+    const { name, location } = await request.json();
     if (!name) return NextResponse.json({ error: 'Company name is required' }, { status: 400 });
 
     const db = await getDb();
     const old = await db.execute({ sql: 'SELECT * FROM companies WHERE id = ?', args: [id] });
     if (old.rows.length === 0) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-    await db.execute({ sql: 'UPDATE companies SET name = ? WHERE id = ?', args: [name.trim(), id] });
+    await db.execute({ sql: 'UPDATE companies SET name = ?, location = ? WHERE id = ?', args: [name.trim(), (location || '').trim(), id] });
     const row = await db.execute({ sql: 'SELECT * FROM companies WHERE id = ?', args: [id] });
     return NextResponse.json(row.rows[0]);
   } catch (err) {

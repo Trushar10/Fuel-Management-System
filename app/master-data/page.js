@@ -195,25 +195,22 @@ export default function MasterDataPage() {
   const [places, setPlaces] = useState([]);
   const [fuelRates, setFuelRates] = useState([]);
   const [companies, setCompanies] = useState([]);
-  const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
-    const [d, v, p, fr, c, l] = await Promise.all([
+    const [d, v, p, fr, c] = await Promise.all([
       fetch('/api/drivers').then(r => r.json()),
       fetch('/api/vehicles').then(r => r.json()),
       fetch('/api/filling-places').then(r => r.json()),
       fetch('/api/fuel-rates').then(r => r.json()),
       fetch('/api/companies').then(r => r.json()),
-      fetch('/api/locations').then(r => r.json()),
     ]);
     if (Array.isArray(d)) setDrivers(d);
     if (Array.isArray(v)) setVehicles(v);
     if (Array.isArray(p)) setPlaces(p);
     if (Array.isArray(fr)) setFuelRates(fr);
     if (Array.isArray(c)) setCompanies(c);
-    if (Array.isArray(l)) setLocations(l);
     setLoading(false);
   }, []);
 
@@ -260,15 +257,10 @@ export default function MasterDataPage() {
               ]}
             />
             <MasterSection
-              title="Company Names" icon="🏢" items={companies} apiUrl="/api/companies" onReload={loadAll}
+              title="Companies" icon="🏢" items={companies} apiUrl="/api/companies" onReload={loadAll}
               fields={[
                 { name: 'name', placeholder: 'Company name', bold: true, transform: titleCase },
-              ]}
-            />
-            <MasterSection
-              title="Locations" icon="📍" items={locations} apiUrl="/api/locations" onReload={loadAll}
-              fields={[
-                { name: 'name', placeholder: 'Location name', bold: true, transform: titleCase },
+                { name: 'location', placeholder: 'Location', transform: titleCase },
               ]}
             />
             <MasterSection
