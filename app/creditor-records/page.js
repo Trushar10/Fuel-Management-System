@@ -3,6 +3,19 @@ import { useState, useEffect, useRef } from 'react';
 
 function fmtDate(d) { if (!d) return ''; const [y,m,dd] = d.split('-'); return `${dd}/${m}/${y}`; }
 
+const formatVehicleNumber = (raw) => {
+  const v = raw.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+  let result = '', i = 0;
+  while (i < v.length && /[A-Z]/.test(v[i])) { result += v[i++]; }
+  if (i < v.length) { result += '-'; }
+  while (i < v.length && /[0-9]/.test(v[i])) { result += v[i++]; }
+  if (i < v.length) { result += '-'; }
+  while (i < v.length && /[A-Z]/.test(v[i])) { result += v[i++]; }
+  if (i < v.length) { result += '-'; }
+  while (i < v.length && /[0-9]/.test(v[i])) { result += v[i++]; }
+  return result;
+};
+
 /* ── Autocomplete dropdown ────────────────────────────────── */
 function AutocompleteField({ label, value, onChange, onSelect, suggestions, placeholder, required, readOnly }) {
   const [open, setOpen] = useState(false);
@@ -270,7 +283,7 @@ export default function FuelCostPage() {
             <AutocompleteField
               label="Truck No." value={vehicleSearch} placeholder="e.g. GJ30T0728" required
               readOnly={vehicleLocked}
-              onChange={val => { setVehicleSearch(val); setForm({ ...form, truck_no: val }); }}
+              onChange={val => { const fmt = formatVehicleNumber(val); setVehicleSearch(fmt); setForm({ ...form, truck_no: fmt }); }}
               suggestions={vehicleSuggestions}
               onSelect={s => {
                 if (s === null) { setVehicleSearch(''); setVehicleLocked(false); setForm({ ...form, truck_no: '' }); return; }
