@@ -1,27 +1,41 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import {
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
+  BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 
-const PIE_COLORS = ['#f5a623', '#2de08a', '#4fa3ff', '#a78bfa', '#ff5252', '#06b6d4'];
-
 const KPI_CONFIG = [
-  { key: 'total_fuel', label: 'Total Fuel Used', unit: ' L', color: 'orange', icon: '⛽', dot: 'var(--accent)' },
-  { key: 'total_entries', label: 'Active Trips', color: 'green', icon: '🚛', dot: 'var(--green)' },
-  { key: 'total_distance', label: 'Total Distance', unit: ' km', color: 'blue', icon: '💰', dot: 'var(--blue)' },
-  { key: 'avg_mileage', label: 'Avg Mileage', unit: ' km/L', color: 'purple', icon: '📍', dot: 'var(--purple)' },
+  { key: 'total_fuel', label: 'Total Fuel', unit: ' L', color: 'orange', icon: '⛽', dot: 'var(--accent)' },
+  { key: 'total_trips', label: 'Trips', color: 'green', icon: '🚛', dot: 'var(--green)' },
+  { key: 'total_distance', label: 'Distance', unit: ' km', color: 'blue', icon: '📍', dot: 'var(--blue)' },
+  { key: 'avg_mileage', label: 'Avg Mileage', unit: ' km/L', color: 'purple', icon: '📊', dot: 'var(--purple)' },
 ];
 
+function getCurrentMonth() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function formatMonthLabel(month) {
+  const [y, m] = month.split('-');
+  const date = new Date(Number(y), Number(m) - 1);
+  return date.toLocaleString('default', { month: 'long', year: 'numeric' });
+}
+
 export default function Dashboard() {
-  const [summary, setSummary] = useState(null);
-  const [byTruck, setByTruck] = useState([]);
-  const [byDriver, setByDriver] = useState([]);
-  const [trend, setTrend] = useState([]);
+  const [month, setMonth] = useState(getCurrentMonth());
+  const [vehicle, setVehicle] = useState('');
+  const [driver, setDriver] = useState('');
+  const [company, setCompany] = useState('');
+
+  const [vehicles, setVehicles] = useState([]);
+  const [drivers, setDrivers] = useState([]);
+  const [companies, setCompanies] = useState([]);
+
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [toasts, setToasts] = useState([]);
 
   const showToast = (msg, type = 'error') => {
@@ -30,202 +44,279 @@ export default function Dashboard() {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 5000);
   };
 
+  // Load filter options once
   useEffect(() => {
     Promise.all([
-      fetch('/api/fuel-entries/analytics/summary').then(r => r.json()),
-      fetch('/api/fuel-entries/analytics/by-truck').then(r => r.json()),
-      fetch('/api/fuel-entries/analytics/by-driver').then(r => r.json()),
-      fetch('/api/fuel-entries/analytics/mileage-trend').then(r => r.json()),
-    ]).then(([s, bt, bd, tr]) => {
-      if (s.error) throw new Error(s.error);
-      setSummary(s);
-      setByTruck(bt);
-      setByDriver(bd);
-      setTrend(tr.slice(-30));
-      setLoading(false);
-    }).catch(err => {
-      showToast(err.message, 'error');
-      setLoading(false);
-    });
+      fetch('/api/vehicles').then(r => r.json()),
+      fetch('/api/drivers').then(r => r.json()),
+      fetch('/api/companies').then(r => r.json()),
+    ]).then(([v, d, c]) => {
+      setVehicles(Array.isArray(v) ? v : []);
+      setDrivers(Array.isArray(d) ? d : []);
+      setCompanies(Array.isArray(c) ? c : []);
+    }).catch(() => {});
   }, []);
 
-  if (loading) return (
-    <>
-      <div className="topbar">
-        <div className="page-title">Dashboard</div>
-      </div>
-      <div className="content-area">
-        <div className="loading-spinner"><div className="spinner" /></div>
-      </div>
-    </>
-  );
+  const fetchData = useCallback(() => {
+    setLoading(true);
+    const params = new URLSearchParams({ month });
+    if (vehicle) params.set('truck_no', vehicle);
+    if (driver) params.set('driver_name', driver);
+    if (company) params.set('company', company);
 
-  if (error) return (
-    <>
-      <div className="topbar">
-        <div className="page-title">Dashboard</div>
-      </div>
-      <div className="content-area">
-        <div className="toast-container">
-          {toasts.map(t => (
-            <div key={t.id} className={`toast toast-${t.type}`}>{t.msg}</div>
-          ))}
-        </div>
-        <div className="form-card" style={{ textAlign: 'center', padding: '40px' }}>
-          <p style={{ color: 'var(--muted)' }}>Could not load dashboard data.</p>
-        </div>
-      </div>
-    </>
-  );
+    fetch(`/api/fuel-entries/analytics/daily?${params}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.error) throw new Error(d.error);
+        setData(d);
+      })
+      .catch(err => showToast(err.message))
+      .finally(() => setLoading(false));
+  }, [month, vehicle, driver, company]);
 
-  const isEmpty = !summary || Number(summary.total_entries) === 0;
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const handleReset = () => {
+    setVehicle('');
+    setDriver('');
+    setCompany('');
+  };
+
+  const prevMonth = () => {
+    const [y, m] = month.split('-').map(Number);
+    const d = new Date(y, m - 2, 1);
+    setMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+  };
+
+  const nextMonth = () => {
+    const [y, m] = month.split('-').map(Number);
+    const d = new Date(y, m, 1);
+    setMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+  };
+
+  const summary = data?.summary;
+  const daily = data?.daily || [];
+  const isEmpty = !summary || summary.total_trips === 0;
+
+  const tooltipStyle = { background: '#181c23', border: '1px solid #252b3a', borderRadius: 8, color: '#e8eaf0' };
 
   return (
     <>
       <div className="topbar">
         <div className="page-title">Dashboard</div>
-        <div className="topbar-search">
-          <span>🔍</span>
-          <input type="text" placeholder="Search anything..." />
-        </div>
         <Link href="/add" className="topbar-btn">+ New Trip</Link>
       </div>
 
       <div className="content-area page-animate">
-        {/* KPI Cards */}
-        <div className="kpi-grid">
-          {KPI_CONFIG.map(({ key, label, unit, color, icon, dot }) => (
-            <div key={key} className={`kpi-card ${color}`}>
-              <div className="kpi-label">
-                <span className="dot" style={{ background: dot }} />
-                {label}
-              </div>
-              <div className="kpi-value">
-                {summary?.[key] ? `${Number(summary[key]).toLocaleString()}` : '—'}
-                {summary?.[key] && unit && (
-                  <span style={{ fontSize: 14, fontWeight: 400, color: 'var(--muted)' }}>{unit}</span>
-                )}
-              </div>
-              <div className="kpi-icon">{icon}</div>
-            </div>
-          ))}
+        {/* Toast */}
+        {toasts.length > 0 && (
+          <div className="toast-container">
+            {toasts.map(t => (
+              <div key={t.id} className={`toast toast-${t.type}`}>{t.msg}</div>
+            ))}
+          </div>
+        )}
+
+        {/* Month Navigation */}
+        <div className="form-card" style={{ padding: '16px 20px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button onClick={prevMonth} className="btn btn-secondary" style={{ padding: '6px 14px' }}>◀</button>
+            <span style={{ fontWeight: 600, fontSize: 16, minWidth: 160, textAlign: 'center' }}>
+              {formatMonthLabel(month)}
+            </span>
+            <button onClick={nextMonth} className="btn btn-secondary" style={{ padding: '6px 14px' }}>▶</button>
+          </div>
+          <div style={{ color: 'var(--muted)', fontSize: 13 }}>
+            {data ? `${data.days_in_month} days` : ''}
+          </div>
         </div>
 
-        {isEmpty ? (
-          <div className="form-card" style={{ textAlign: 'center', padding: '60px' }}>
-            <div style={{ fontSize: 48, marginBottom: 16, opacity: 0.3 }}>⛽</div>
-            <p style={{ color: 'var(--text)', fontWeight: 500, marginBottom: 4 }}>No fuel entries yet</p>
-            <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 20 }}>Add your first entry to see charts and analytics</p>
-            <Link href="/add" className="btn btn-primary">+ Add First Entry</Link>
+        {/* Filters */}
+        <div className="form-card" style={{ padding: '16px 20px', marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+            <span style={{ fontWeight: 600, fontSize: 14 }}>🔍 Filters</span>
+            {(vehicle || driver || company) && (
+              <button onClick={handleReset} className="btn btn-secondary" style={{ fontSize: 11, padding: '3px 10px', marginLeft: 'auto' }}>
+                Clear All
+              </button>
+            )}
           </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+            <div>
+              <label className="form-label" style={{ fontSize: 12, marginBottom: 4 }}>Vehicle</label>
+              <select className="form-input" value={vehicle} onChange={e => setVehicle(e.target.value)}>
+                <option value="">All Vehicles</option>
+                {vehicles.map(v => (
+                  <option key={v.id} value={v.number}>{v.number}{v.brand ? ` (${v.brand})` : ''}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="form-label" style={{ fontSize: 12, marginBottom: 4 }}>Driver</label>
+              <select className="form-input" value={driver} onChange={e => setDriver(e.target.value)}>
+                <option value="">All Drivers</option>
+                {drivers.map(d => (
+                  <option key={d.id} value={d.name}>{d.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="form-label" style={{ fontSize: 12, marginBottom: 4 }}>Company</label>
+              <select className="form-input" value={company} onChange={e => setCompany(e.target.value)}>
+                <option value="">All Companies</option>
+                {companies.map(c => (
+                  <option key={c.id} value={c.name}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="loading-spinner"><div className="spinner" /></div>
         ) : (
           <>
-            {/* Charts Row */}
-            <div className="charts-row">
-              <div className="chart-card">
-                <div className="chart-header">
-                  <div>
-                    <div className="chart-title">Mileage Trend</div>
-                    <div className="chart-sub">km/L per entry</div>
+            {/* KPI Cards */}
+            <div className="kpi-grid">
+              {KPI_CONFIG.map(({ key, label, unit, color, icon, dot }) => (
+                <div key={key} className={`kpi-card ${color}`}>
+                  <div className="kpi-label">
+                    <span className="dot" style={{ background: dot }} />
+                    {label}
                   </div>
-                </div>
-                <ResponsiveContainer width="100%" height={200}>
-                  <LineChart data={trend}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                    <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#6b7280' }} />
-                    <YAxis tick={{ fontSize: 10, fill: '#6b7280' }} />
-                    <Tooltip
-                      contentStyle={{ background: '#181c23', border: '1px solid #252b3a', borderRadius: 8, color: '#e8eaf0' }}
-                      formatter={(v) => [`${v} km/L`, 'Mileage']}
-                    />
-                    <Line type="monotone" dataKey="mileage" stroke="#f5a623" strokeWidth={2} dot={{ r: 3, fill: '#f5a623' }} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="chart-card">
-                <div className="chart-header">
-                  <div>
-                    <div className="chart-title">Fuel by Vehicle</div>
-                    <div className="chart-sub">Distribution this period</div>
+                  <div className="kpi-value">
+                    {summary?.[key] ? `${Number(summary[key]).toLocaleString()}` : '—'}
+                    {summary?.[key] && unit && (
+                      <span style={{ fontSize: 14, fontWeight: 400, color: 'var(--muted)' }}>{unit}</span>
+                    )}
                   </div>
+                  <div className="kpi-icon">{icon}</div>
                 </div>
-                <ResponsiveContainer width="100%" height={200}>
-                  <PieChart>
-                    <Pie
-                      data={byTruck}
-                      dataKey="total_fuel"
-                      nameKey="truck_no"
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={50}
-                      outerRadius={80}
-                    >
-                      {byTruck.map((_, i) => (
-                        <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{ background: '#181c23', border: '1px solid #252b3a', borderRadius: 8, color: '#e8eaf0' }}
-                      formatter={(v) => [`${v} L`, 'Fuel']}
-                    />
-                    <Legend
-                      verticalAlign="bottom"
-                      iconType="circle"
-                      iconSize={8}
-                      formatter={(value) => <span style={{ color: '#9ca3af', fontSize: 10 }}>{value}</span>}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
+              ))}
             </div>
 
-            {/* Bottom Grid */}
-            <div className="bottom-grid">
-              {/* Fuel per Truck */}
-              <div className="chart-card">
-                <div className="chart-header">
-                  <div>
-                    <div className="chart-title">Fuel Filled per Truck (L)</div>
-                    <div className="chart-sub">Bar comparison</div>
-                  </div>
-                </div>
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={byTruck} margin={{ top: 4, right: 8, left: 0, bottom: 40 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                    <XAxis dataKey="truck_no" tick={{ fontSize: 10, fill: '#6b7280' }} angle={-30} textAnchor="end" interval={0} />
-                    <YAxis tick={{ fontSize: 10, fill: '#6b7280' }} />
-                    <Tooltip
-                      contentStyle={{ background: '#181c23', border: '1px solid #252b3a', borderRadius: 8, color: '#e8eaf0' }}
-                      formatter={(v) => [`${v} L`, 'Fuel']}
-                    />
-                    <Bar dataKey="total_fuel" fill="#f5a623" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+            {isEmpty ? (
+              <div className="form-card" style={{ textAlign: 'center', padding: '60px' }}>
+                <div style={{ fontSize: 48, marginBottom: 16, opacity: 0.3 }}>⛽</div>
+                <p style={{ color: 'var(--text)', fontWeight: 500, marginBottom: 4 }}>No data for {formatMonthLabel(month)}</p>
+                <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 20 }}>
+                  {vehicle || driver || company ? 'Try changing filters or selecting a different month' : 'No fuel entries found for this month'}
+                </p>
+                <Link href="/add" className="btn btn-primary">+ Add Entry</Link>
               </div>
+            ) : (
+              <>
+                {/* Daily Fuel Usage Chart */}
+                <div className="chart-card" style={{ marginBottom: 16 }}>
+                  <div className="chart-header">
+                    <div>
+                      <div className="chart-title">Daily Fuel Usage (L)</div>
+                      <div className="chart-sub">{formatMonthLabel(month)} — {data.days_in_month} days</div>
+                    </div>
+                  </div>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart data={daily} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                      <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#6b7280' }} interval={0} />
+                      <YAxis tick={{ fontSize: 10, fill: '#6b7280' }} />
+                      <Tooltip
+                        contentStyle={tooltipStyle}
+                        labelFormatter={(day) => {
+                          const d = daily.find(x => x.day === day);
+                          return d ? d.date : `Day ${day}`;
+                        }}
+                        formatter={(v, name) => {
+                          if (name === 'total_fuel') return [`${v} L`, 'Fuel'];
+                          return [v, name];
+                        }}
+                      />
+                      <Bar dataKey="total_fuel" fill="#f5a623" radius={[3, 3, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
 
-              {/* Avg Mileage per Truck */}
-              <div className="chart-card">
-                <div className="chart-header">
-                  <div>
-                    <div className="chart-title">Avg Mileage per Truck</div>
-                    <div className="chart-sub">km/L comparison</div>
+                {/* Charts Row */}
+                <div className="charts-row">
+                  {/* Daily Distance Chart */}
+                  <div className="chart-card">
+                    <div className="chart-header">
+                      <div>
+                        <div className="chart-title">Daily Distance (km)</div>
+                        <div className="chart-sub">{formatMonthLabel(month)}</div>
+                      </div>
+                    </div>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <BarChart data={daily} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                        <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#6b7280' }} interval={0} />
+                        <YAxis tick={{ fontSize: 10, fill: '#6b7280' }} />
+                        <Tooltip
+                          contentStyle={tooltipStyle}
+                          labelFormatter={(day) => {
+                            const d = daily.find(x => x.day === day);
+                            return d ? d.date : `Day ${day}`;
+                          }}
+                          formatter={(v) => [`${v} km`, 'Distance']}
+                        />
+                        <Bar dataKey="total_distance" fill="#4fa3ff" radius={[3, 3, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Daily Mileage Trend */}
+                  <div className="chart-card">
+                    <div className="chart-header">
+                      <div>
+                        <div className="chart-title">Daily Avg Mileage (km/L)</div>
+                        <div className="chart-sub">{formatMonthLabel(month)}</div>
+                      </div>
+                    </div>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <LineChart data={daily.filter(d => d.avg_mileage > 0)} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                        <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#6b7280' }} />
+                        <YAxis tick={{ fontSize: 10, fill: '#6b7280' }} />
+                        <Tooltip
+                          contentStyle={tooltipStyle}
+                          labelFormatter={(day) => {
+                            const d = daily.find(x => x.day === day);
+                            return d ? d.date : `Day ${day}`;
+                          }}
+                          formatter={(v) => [`${v} km/L`, 'Mileage']}
+                        />
+                        <Line type="monotone" dataKey="avg_mileage" stroke="#a78bfa" strokeWidth={2} dot={{ r: 3, fill: '#a78bfa' }} />
+                      </LineChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={byTruck} margin={{ top: 4, right: 8, left: 0, bottom: 40 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                    <XAxis dataKey="truck_no" tick={{ fontSize: 10, fill: '#6b7280' }} angle={-30} textAnchor="end" interval={0} />
-                    <YAxis tick={{ fontSize: 10, fill: '#6b7280' }} />
-                    <Tooltip
-                      contentStyle={{ background: '#181c23', border: '1px solid #252b3a', borderRadius: 8, color: '#e8eaf0' }}
-                      formatter={(v) => [`${v} km/L`, 'Avg Mileage']}
-                    />
-                    <Bar dataKey="avg_mileage" fill="#a78bfa" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
+
+                {/* Daily Trips Chart */}
+                <div className="chart-card">
+                  <div className="chart-header">
+                    <div>
+                      <div className="chart-title">Daily Trip Count</div>
+                      <div className="chart-sub">{formatMonthLabel(month)}</div>
+                    </div>
+                  </div>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart data={daily} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                      <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#6b7280' }} interval={0} />
+                      <YAxis tick={{ fontSize: 10, fill: '#6b7280' }} allowDecimals={false} />
+                      <Tooltip
+                        contentStyle={tooltipStyle}
+                        labelFormatter={(day) => {
+                          const d = daily.find(x => x.day === day);
+                          return d ? d.date : `Day ${day}`;
+                        }}
+                        formatter={(v) => [v, 'Trips']}
+                      />
+                      <Bar dataKey="trip_count" fill="#2de08a" radius={[3, 3, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </>
+            )}
           </>
         )}
       </div>
