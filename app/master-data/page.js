@@ -5,8 +5,14 @@ function MasterSection({ title, icon, items, fields, apiUrl, onReload }) {
   const [adding, setAdding] = useState(false);
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState({});
-  const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [toasts, setToasts] = useState([]);
+
+  const showToast = (msg, type = 'success') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, msg, type }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 1000);
+  };
 
   const startAdd = () => {
     const empty = {};
@@ -14,7 +20,6 @@ function MasterSection({ title, icon, items, fields, apiUrl, onReload }) {
     setForm(empty);
     setAdding(true);
     setEditId(null);
-    setError('');
   };
 
   const startEdit = (item) => {
@@ -23,20 +28,19 @@ function MasterSection({ title, icon, items, fields, apiUrl, onReload }) {
     setForm(data);
     setEditId(item.id);
     setAdding(false);
-    setError('');
   };
 
-  const cancel = () => { setAdding(false); setEditId(null); setError(''); };
+  const cancel = () => { setAdding(false); setEditId(null); };
 
   const handleSave = async () => {
     setSaving(true);
-    setError('');
     try {
       const url = editId ? `${apiUrl}/${editId}` : apiUrl;
       const method = editId ? 'PUT' : 'POST';
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || 'Failed'); return; }
+      if (!res.ok) { showToast(data.error || 'Failed', 'error'); return; }
+      showToast(editId ? 'Updated successfully!' : 'Added successfully!', 'success');
       cancel();
       onReload();
     } finally {
@@ -52,16 +56,17 @@ function MasterSection({ title, icon, items, fields, apiUrl, onReload }) {
 
   return (
     <div className="master-card">
+      <div className="toast-container">
+        {toasts.map(t => (
+          <div key={t.id} className={`toast toast-${t.type}`}>{t.msg}</div>
+        ))}
+      </div>
       <div className="master-card-head">
         <div className="master-card-title">
           <span className="master-icon">{icon}</span> {title}
         </div>
         <span className="master-count">{items.length} records</span>
       </div>
-
-      {error && (
-        <div style={{ margin: '8px 16px', padding: '8px 12px', background: 'rgba(255,82,82,0.1)', border: '1px solid rgba(255,82,82,0.2)', borderRadius: 8, color: 'var(--red)', fontSize: 12 }}>{error}</div>
-      )}
 
       <div className="master-list">
         {/* Add row */}

@@ -12,13 +12,42 @@ const empty = {
 /* ── Autocomplete dropdown component ────────────────────────── */
 function AutocompleteField({ label, value, onChange, onSelect, suggestions, placeholder, required, readOnly }) {
   const [open, setOpen] = useState(false);
+  const [hlIdx, setHlIdx] = useState(-1);
   const ref = useRef(null);
+  const listRef = useRef(null);
 
   useEffect(() => {
     const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  useEffect(() => { setHlIdx(-1); }, [suggestions.length, open]);
+
+  const handleKeyDown = (e) => {
+    if (!open || suggestions.length === 0) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHlIdx(prev => { const next = prev < suggestions.length - 1 ? prev + 1 : 0; scrollToItem(next); return next; });
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHlIdx(prev => { const next = prev > 0 ? prev - 1 : suggestions.length - 1; scrollToItem(next); return next; });
+    } else if (e.key === 'Enter' && hlIdx >= 0) {
+      e.preventDefault();
+      onSelect(suggestions[hlIdx]); setOpen(false);
+    } else if (e.key === 'Escape') {
+      setOpen(false);
+    }
+  };
+
+  const scrollToItem = (idx) => {
+    requestAnimationFrame(() => {
+      const list = listRef.current;
+      if (!list) return;
+      const item = list.children[idx];
+      if (item) item.scrollIntoView({ block: 'nearest' });
+    });
+  };
 
   return (
     <div ref={ref} className="form-group" style={{ position: 'relative' }}>
@@ -28,6 +57,7 @@ function AutocompleteField({ label, value, onChange, onSelect, suggestions, plac
           type="text" value={value} placeholder={placeholder} required={required} readOnly={readOnly}
           onChange={e => { onChange(e.target.value); setOpen(true); }}
           onFocus={() => !readOnly && setOpen(true)}
+          onKeyDown={handleKeyDown}
           className="fc-input"
           style={readOnly ? { background: 'var(--surface)', cursor: 'not-allowed', color: 'var(--muted)' } : {}}
         />
@@ -39,9 +69,10 @@ function AutocompleteField({ label, value, onChange, onSelect, suggestions, plac
         )}
       </div>
       {open && suggestions.length > 0 && (
-        <div className="autocomplete-list">
+        <div className="autocomplete-list" ref={listRef}>
           {suggestions.map((s, i) => (
-            <div key={i} onClick={() => { onSelect(s); setOpen(false); }} className="autocomplete-item">{s.label}</div>
+            <div key={i} onClick={() => { onSelect(s); setOpen(false); }}
+              className={`autocomplete-item${i === hlIdx ? ' active' : ''}`}>{s.label}</div>
           ))}
         </div>
       )}
@@ -55,6 +86,13 @@ export default function FuelForm({ id }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [toasts, setToasts] = useState([]);
+
+  const showToast = (msg, type = 'success') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, msg, type }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 1000);
+  };
   const [recentEntries, setRecentEntries] = useState([]);
   const isEdit = Boolean(id);
 
@@ -95,7 +133,7 @@ export default function FuelForm({ id }) {
       fetch(`/api/fuel-entries/${id}`)
         .then(r => r.json())
         .then(data => {
-          if (data.error) { setError(data.error); return; }
+          if (data.error) { showToast(data.error, 'error'); return; }
           setForm({
             date: data.date, truck_no: data.truck_no, driver_phone: data.driver_phone,
             driver_name: data.driver_name, start_km: data.start_km, fuel_qty: data.fuel_qty,
@@ -130,8 +168,8 @@ export default function FuelForm({ id }) {
       const method = isEdit ? 'PUT' : 'POST';
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || 'Failed'); return; }
-      setSuccess(isEdit ? 'Entry updated successfully!' : 'Entry saved successfully!');
+      if (!res.ok) { showToast(data.error || 'Failed', 'error'); return; }
+      showToast(isEdit ? 'Entry updated successfully!' : 'Entry saved successfully!', 'success');
       if (!isEdit) resetForm();
       loadRecent();
     } finally { setLoading(false); }
@@ -165,12 +203,11 @@ export default function FuelForm({ id }) {
           </div>
         </div>
 
-        {error && (
-          <div style={{ marginBottom: 14, padding: '12px 16px', background: 'rgba(255,82,82,0.1)', border: '1px solid rgba(255,82,82,0.2)', borderRadius: 8, color: 'var(--red)', fontSize: 13 }}>{error}</div>
-        )}
-        {success && (
-          <div style={{ marginBottom: 14, padding: '12px 16px', background: 'rgba(45,224,138,0.1)', border: '1px solid rgba(45,224,138,0.2)', borderRadius: 8, color: 'var(--green)', fontSize: 13 }}>{success}</div>
-        )}
+        <div className="toast-container">
+          {toasts.map(t => (
+            <div key={t.id} className={`toast toast-${t.type}`}>{t.msg}</div>
+          ))}
+        </div>
 
         <div className="split-layout">
         <div className="split-left">

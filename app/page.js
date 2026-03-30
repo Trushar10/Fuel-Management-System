@@ -22,6 +22,13 @@ export default function Dashboard() {
   const [trend, setTrend] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [toasts, setToasts] = useState([]);
+
+  const showToast = (msg, type = 'error') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, msg, type }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 1000);
+  };
 
   useEffect(() => {
     Promise.all([
@@ -37,7 +44,7 @@ export default function Dashboard() {
       setTrend(tr.slice(-30));
       setLoading(false);
     }).catch(err => {
-      setError(err.message);
+      showToast(err.message, 'error');
       setLoading(false);
     });
   }, []);
@@ -59,8 +66,13 @@ export default function Dashboard() {
         <div className="page-title">Dashboard</div>
       </div>
       <div className="content-area">
+        <div className="toast-container">
+          {toasts.map(t => (
+            <div key={t.id} className={`toast toast-${t.type}`}>{t.msg}</div>
+          ))}
+        </div>
         <div className="form-card" style={{ textAlign: 'center', padding: '40px' }}>
-          <p style={{ color: 'var(--red)' }}>Error: {error}</p>
+          <p style={{ color: 'var(--muted)' }}>Could not load dashboard data.</p>
         </div>
       </div>
     </>
