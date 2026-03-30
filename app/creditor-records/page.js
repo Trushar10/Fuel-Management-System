@@ -86,7 +86,7 @@ export default function FuelCostPage() {
   const showToast = (msg, type = 'success') => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, msg, type }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 1000);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 5000);
   };
   const [editId, setEditId] = useState(null);
 

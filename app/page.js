@@ -27,7 +27,7 @@ export default function Dashboard() {
   const showToast = (msg, type = 'error') => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, msg, type }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 1000);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 5000);
   };
 
   useEffect(() => {
