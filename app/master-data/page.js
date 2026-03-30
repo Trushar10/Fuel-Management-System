@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 /* ── Formatters ── */
 const titleCase = (str) => str.replace(/\b\w/g, c => c.toUpperCase()).replace(/(?<=\b\w)\w*/g, m => m.toLowerCase());
@@ -31,6 +31,8 @@ function MasterSection({ title, icon, items, fields, apiUrl, onReload }) {
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
   const [toasts, setToasts] = useState([]);
+  const [focusedField, setFocusedField] = useState(null);
+  const suggestRef = useRef(null);
 
   const showToast = (msg, type = 'success') => {
     const id = Date.now();
@@ -54,7 +56,7 @@ function MasterSection({ title, icon, items, fields, apiUrl, onReload }) {
     setAdding(false);
   };
 
-  const cancel = () => { setAdding(false); setEditId(null); };
+  const cancel = () => { setAdding(false); setEditId(null); setFocusedField(null); };
 
   const handleSave = async () => {
     // Validate all fields required
@@ -103,24 +105,32 @@ function MasterSection({ title, icon, items, fields, apiUrl, onReload }) {
         {adding && (
           <div className="master-item" style={{ background: 'rgba(245,166,35,0.05)' }}>
             <div style={{ display: 'flex', gap: 8, flex: 1 }}>
-              {fields.map(f => f.options ? (
-                <select key={f.name} value={form[f.name] || ''} required
-                  onChange={e => setForm({ ...form, [f.name]: e.target.value })}
-                  className="fc-input" style={{ flex: 1, padding: '6px 10px', fontSize: 12 }}>
-                  <option value="">{f.placeholder}</option>
-                  {f.options.map(o => <option key={o} value={o}>{o}</option>)}
-                </select>
-              ) : (
-                <input key={f.name} type={f.type || 'text'} placeholder={f.placeholder} value={form[f.name] || ''}
-                  inputMode={f.inputMode || undefined}
-                  maxLength={f.maxLength || undefined}
-                  required
-                  onChange={e => {
-                    let val = e.target.value;
-                    if (f.transform) val = f.transform(val);
-                    setForm({ ...form, [f.name]: val });
-                  }}
-                  className="fc-input" style={{ flex: 1, padding: '6px 10px', fontSize: 12 }} />
+              {fields.map(f => (
+                <div key={f.name} style={{ flex: 1, position: 'relative' }}>
+                  <input type={f.type || 'text'} placeholder={f.placeholder} value={form[f.name] || ''}
+                    inputMode={f.inputMode || undefined}
+                    maxLength={f.maxLength || undefined}
+                    required
+                    onFocus={() => f.suggestions && setFocusedField(f.name)}
+                    onBlur={() => setTimeout(() => setFocusedField(null), 150)}
+                    onChange={e => {
+                      let val = e.target.value;
+                      if (f.transform) val = f.transform(val);
+                      setForm({ ...form, [f.name]: val });
+                      if (f.suggestions) setFocusedField(f.name);
+                    }}
+                    className="fc-input" style={{ width: '100%', padding: '6px 10px', fontSize: 12 }} />
+                  {f.suggestions && focusedField === f.name && (() => {
+                    const filtered = f.suggestions.filter(s => s.toLowerCase().includes((form[f.name] || '').toLowerCase()));
+                    return filtered.length > 0 ? (
+                      <div className="autocomplete-list" ref={suggestRef}>
+                        {filtered.map(s => (
+                          <div key={s} className="autocomplete-item" onMouseDown={() => { setForm({ ...form, [f.name]: s }); setFocusedField(null); }}>{s}</div>
+                        ))}
+                      </div>
+                    ) : null;
+                  })()}
+                </div>
               ))}
             </div>
             <div className="master-actions">
@@ -139,24 +149,33 @@ function MasterSection({ title, icon, items, fields, apiUrl, onReload }) {
             {editId === item.id ? (
               <>
                 <div style={{ display: 'flex', gap: 8, flex: 1 }}>
-                  {fields.map(f => f.options ? (
-                    <select key={f.name} value={form[f.name] || ''} required
-                      onChange={e => setForm({ ...form, [f.name]: e.target.value })}
-                      className="fc-input" style={{ flex: 1, padding: '6px 10px', fontSize: 12 }}>
-                      <option value="">{f.placeholder}</option>
-                      {f.options.map(o => <option key={o} value={o}>{o}</option>)}
-                    </select>
-                  ) : (
-                    <input key={f.name} type={f.type || 'text'} value={form[f.name] || ''}
-                      inputMode={f.inputMode || undefined}
-                      maxLength={f.maxLength || undefined}
-                      required
-                      onChange={e => {
-                        let val = e.target.value;
-                        if (f.transform) val = f.transform(val);
-                        setForm({ ...form, [f.name]: val });
-                      }}
-                      className="fc-input" style={{ flex: 1, padding: '6px 10px', fontSize: 12 }} />
+                  {fields.map(f => (
+                    <div key={f.name} style={{ flex: 1, position: 'relative' }}>
+                      <input type={f.type || 'text'} value={form[f.name] || ''}
+                        inputMode={f.inputMode || undefined}
+                        maxLength={f.maxLength || undefined}
+                        required
+                        placeholder={f.placeholder}
+                        onFocus={() => f.suggestions && setFocusedField(f.name)}
+                        onBlur={() => setTimeout(() => setFocusedField(null), 150)}
+                        onChange={e => {
+                          let val = e.target.value;
+                          if (f.transform) val = f.transform(val);
+                          setForm({ ...form, [f.name]: val });
+                          if (f.suggestions) setFocusedField(f.name);
+                        }}
+                        className="fc-input" style={{ width: '100%', padding: '6px 10px', fontSize: 12 }} />
+                      {f.suggestions && focusedField === f.name && (() => {
+                        const filtered = f.suggestions.filter(s => s.toLowerCase().includes((form[f.name] || '').toLowerCase()));
+                        return filtered.length > 0 ? (
+                          <div className="autocomplete-list" ref={suggestRef}>
+                            {filtered.map(s => (
+                              <div key={s} className="autocomplete-item" onMouseDown={() => { setForm({ ...form, [f.name]: s }); setFocusedField(null); }}>{s}</div>
+                            ))}
+                          </div>
+                        ) : null;
+                      })()}
+                    </div>
                   ))}
                 </div>
                 <div className="master-actions">
@@ -239,7 +258,7 @@ export default function MasterDataPage() {
               fields={[
                 { name: 'name', placeholder: 'Driver name', bold: true, transform: titleCase },
                 { name: 'phone', placeholder: 'Phone number', inputMode: 'numeric', maxLength: 10, transform: phoneOnly },
-                { name: 'company', placeholder: 'Select company', options: companies.map(c => c.name) },
+                { name: 'company', placeholder: 'Company name', suggestions: companies.map(c => c.name), transform: titleCase },
               ]}
             />
             <MasterSection
@@ -247,7 +266,7 @@ export default function MasterDataPage() {
               fields={[
                 { name: 'number', placeholder: 'e.g. GJ-30-HJ-0728', bold: true, transform: formatVehicleNumber },
                 { name: 'brand', placeholder: 'Brand name', transform: titleCase },
-                { name: 'company', placeholder: 'Company name', transform: titleCase },
+                { name: 'company', placeholder: 'Company name', suggestions: companies.map(c => c.name), transform: titleCase },
               ]}
             />
             <MasterSection
