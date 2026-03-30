@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FuelCore — Fuel Management System</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --surface2: #181c23;
+    --border: #1e2330;
+    --border2: #252b3a;
+    --accent: #f5a623;
+    --accent2: #e8892b;
+    --green: #2de08a;
+    --red: #ff5252;
+    --blue: #4fa3ff;
+    --purple: #a78bfa;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --muted2: #9ca3af;
+    --sidebar-w: 220px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: var(--sidebar-w);
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    padding: 0;
+    position: relative;
+    z-index: 10;
+  }
+
+  .logo {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo-mark {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo-icon {
+    width: 34px; height: 34px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .logo-text {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+  .logo-text span { color: var(--accent); }
+  .logo-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 4px;
+    padding-left: 44px;
+  }
+
+  nav { padding: 16px 10px; flex: 1; }
+  .nav-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 8px 10px 4px;
+    margin-top: 8px;
+  }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 400;
+    color: var(--muted2);
+    transition: all .18s;
+    position: relative;
+    margin-bottom: 1px;
+    letter-spacing: 0.1px;
+  }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active {
+    background: rgba(245,166,35,0.12);
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .nav-item.active::before {
+    content: '';
+    position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+    width: 3px; height: 70%; background: var(--accent);
+    border-radius: 0 3px 3px 0;
+  }
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+
+  .nav-badge {
+    margin-left: auto;
+    background: var(--accent);
+    color: #000;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 20px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .sidebar-footer {
+    padding: 14px 14px;
+    border-top: 1px solid var(--border);
+  }
+  .user-card {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: var(--surface2);
+  }
+  .avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: #000;
+    flex-shrink: 0;
+  }
+  .user-info { flex: 1; min-width: 0; }
+  .user-name { font-size: 12.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-role { font-size: 10px; color: var(--muted); font-family: 'DM Mono', monospace; }
+
+  /* ── MAIN ── */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .topbar {
+    height: 58px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 28px;
+    gap: 16px;
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+  .page-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    flex: 1;
+  }
+  .topbar-search {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 12px;
+    width: 220px;
+  }
+  .topbar-search input {
+    background: none; border: none; outline: none;
+    color: var(--text); font-size: 13px; font-family: 'DM Sans', sans-serif;
+    width: 100%;
+  }
+  .topbar-search input::placeholder { color: var(--muted); }
+
+  .topbar-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: background .15s;
+  }
+  .topbar-btn:hover { background: var(--accent2); }
+
+  .topbar-icon-btn {
+    width: 36px; height: 36px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 15px;
+    transition: border-color .15s;
+    position: relative;
+  }
+  .topbar-icon-btn:hover { border-color: var(--border2); }
+  .notif-dot {
+    position: absolute; top: 6px; right: 7px;
+    width: 7px; height: 7px;
+    background: var(--red); border-radius: 50%;
+    border: 1px solid var(--surface);
+  }
+
+  /* ── CONTENT ── */
+  .content { flex: 1; overflow-y: auto; padding: 24px 28px; }
+  .content::-webkit-scrollbar { width: 5px; }
+  .content::-webkit-scrollbar-track { background: transparent; }
+  .content::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 10px; }
+
+  /* pages */
+  .page { display: none; animation: fadeIn .25s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── KPI CARDS ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 18px 16px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .2s;
+  }
+  .kpi-card:hover { border-color: var(--border2); }
+  .kpi-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .kpi-card.orange::before { background: linear-gradient(90deg, var(--accent), transparent); }
+  .kpi-card.green::before { background: linear-gradient(90deg, var(--green), transparent); }
+  .kpi-card.blue::before { background: linear-gradient(90deg, var(--blue), transparent); }
+  .kpi-card.purple::before { background: linear-gradient(90deg, var(--purple), transparent); }
+
+  .kpi-label {
+    font-size: 11px; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 1px; font-family: 'DM Mono', monospace;
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .kpi-label .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .kpi-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 26px; font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .kpi-sub { font-size: 12px; color: var(--muted2); display: flex; align-items: center; gap: 5px; }
+  .kpi-change { font-weight: 600; font-size: 12px; }
+  .kpi-change.up { color: var(--green); }
+  .kpi-change.down { color: var(--red); }
+  .kpi-icon {
+    position: absolute; right: 16px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 32px; opacity: 0.07;
+  }
+
+  /* ── CHARTS ROW ── */
+  .charts-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+  }
+  .chart-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .chart-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px; font-weight: 700;
+  }
+  .chart-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .chart-tabs { display: flex; gap: 4px; }
+  .chart-tab {
+    font-size: 11px; padding: 4px 10px;
+    border-radius: 6px; cursor: pointer;
+    color: var(--muted); background: var(--surface2);
+    border: 1px solid transparent;
+    font-family: 'DM Mono', monospace;
+    transition: all .15s;
+  }
+  .chart-tab.active {
+    background: rgba(245,166,35,0.12);
+    color: var(--accent);
+    border-color: rgba(245,166,35,0.25);
+  }
+  canvas { max-height: 200px; }
+
+  /* ── BOTTOM GRID ── */
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 14px;
+  }
+
+  /* ── TABLE ── */
+  .table-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .table-head {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .table-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; }
+  .view-all {
+    font-size: 11px; color: var(--accent);
+    cursor: pointer; font-family: 'DM Mono', monospace;
+    letter-spacing: 0.5px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  thead th {
+    text-align: left;
+    padding: 10px 18px;
+    color: var(--muted);
+    font-weight: 400;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    background: rgba(255,255,255,0.02);
+    border-bottom: 1px solid var(--border);
+  }
+  tbody td {
+    padding: 11px 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    color: var(--muted2);
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: rgba(255,255,255,0.02); }
+  .td-main { color: var(--text) !important; font-weight: 500; }
+  .badge {
+    display: inline-flex; align-items: center;
+    padding: 2px 8px; border-radius: 20px;
+    font-size: 10.5px; font-weight: 600;
+    font-family: 'DM Mono', monospace;
+  }
+  .badge-green { background: rgba(45,224,138,0.12); color: var(--green); }
+  .badge-orange { background: rgba(245,166,35,0.12); color: var(--accent); }
+  .badge-red { background: rgba(255,82,82,0.12); color: var(--red); }
+  .badge-blue { background: rgba(79,163,255,0.12); color: var(--blue); }
+
+  /* ── VEHICLE STATUS ── */
+  .vehicle-list { padding: 0 14px 14px; }
+  .vehicle-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 4px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .vehicle-item:last-child { border-bottom: none; }
+  .veh-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: var(--surface2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .veh-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .veh-plate { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
+  .veh-bar-wrap { flex: 1; }
+  .veh-bar-label { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-bottom: 4px; }
+  .veh-bar { height: 5px; background: var(--surface2); border-radius: 10px; overflow: hidden; }
+  .veh-bar-fill { height: 100%; border-radius: 10px; transition: width .4s ease; }
+
+  /* ── FORM STYLES ── */
+  .form-section { margin-bottom: 24px; }
+  .section-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-num {
+    width: 24px; height: 24px; border-radius: 6px;
+    background: var(--accent);
+    color: #000; font-size: 11px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Mono', monospace;
+  }
+  .section-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; }
+
+  .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .form-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 11.5px; color: var(--muted2); font-family: 'DM Mono', monospace; letter-spacing: 0.3px; }
+  input, select, textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    transition: border-color .15s;
+    width: 100%;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  select { appearance: none; cursor: pointer; }
+  textarea { resize: vertical; min-height: 80px; }
+  .input-unit {
+    position: relative;
+  }
+  .input-unit input { padding-right: 50px; }
+  .unit-label {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace;
+  }
+
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+    margin-bottom: 14px;
+  }
+
+  .form-actions {
+    display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;
+  }
+  .btn {
+    padding: 9px 20px; border-radius: 8px;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; border: none;
+    font-family: 'DM Sans', sans-serif;
+    transition: all .15s;
+  }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-secondary {
+    background: var(--surface2); color: var(--muted2);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { color: var(--text); border-color: var(--border2); }
+  .btn-ghost { background: transparent; color: var(--muted2); }
+
+  /* ── PAGE HEADERS ── */
+  .page-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 22px;
+  }
+  .page-head-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+  .page-head-sub { font-size: 13px; color: var(--muted); margin-top: 3px; }
+
+  /* ── TOOLBAR ── */
+  .toolbar {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 16px;
+  }
+  .toolbar-search {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    flex: 1; max-width: 280px;
+  }
+  .toolbar-search input { background: none; border: none; outline: none; color: var(--text); font-size: 13px; }
+  .toolbar-filter {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px; color: var(--muted2);
+    cursor: pointer;
+  }
+  .toolbar-spacer { flex: 1; }
+
+  /* ── MASTER DATA GRID ── */
+  .master-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .master-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color .2s;
+  }
+  .master-card:hover { border-color: var(--border2); }
+  .master-card-head {
+    padding: 14px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .master-card-title {
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+  }
+  .master-icon { font-size: 18px; }
+  .master-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    background: var(--surface2);
+    padding: 2px 8px; border-radius: 20px;
+  }
+  .master-list { padding: 8px 0; }
+  .master-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    transition: background .12s;
+    cursor: pointer;
+  }
+  .master-item:last-child { border-bottom: none; }
+  .master-item:hover { background: rgba(255,255,255,0.02); }
+  .master-item-name { font-size: 13px; color: var(--text); }
+  .master-item-sub { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
+  .master-actions { display: flex; gap: 6px; }
+  .icon-btn { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 14px; padding: 3px; transition: color .12s; }
+  .icon-btn:hover { color: var(--text); }
+  .master-add {
+    display: flex; align-items: center; gap: 6px;
+    padding: 10px 16px;
+    color: var(--accent); font-size: 12.5px;
+    cursor: pointer; border-top: 1px solid var(--border);
+    transition: background .12s;
+    font-family: 'DM Mono', monospace;
+  }
+  .master-add:hover { background: rgba(245,166,35,0.05); }
+
+  /* ── CREDITOR ── */
+  .creditor-summary {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 22px;
+  }
+  .cred-stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+  }
+  .cred-stat-val { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+  .cred-stat-lbl { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 1px; }
+
+  /* ── ALL ENTRIES ── */
+  .entries-stats {
+    display: flex; gap: 10px; margin-bottom: 16px;
+  }
+  .estat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 12px;
+    display: flex; align-items: center; gap: 8px;
+    color: var(--muted2);
+  }
+  .estat strong { color: var(--text); font-family: 'Syne', sans-serif; font-size: 15px; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 10px; }
+
+  /* ── FUEL GAUGE ── */
+  .gauge-wrap { display: flex; justify-content: center; padding: 10px 0 0; }
+  svg.gauge text { font-family: 'DM Mono', monospace; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">
+      <div class="logo-icon">⛽</div>
+      <div class="logo-text">Fuel<span>Core</span></div>
+    </div>
+    <div class="logo-sub">Fleet Management v2.4</div>
+  </div>
+
+  <nav>
+    <div class="nav-label">Main</div>
+    <div class="nav-item active" onclick="showPage('dashboard',this)">
+      <span class="nav-icon">📊</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="showPage('trip',this)">
+      <span class="nav-icon">🚛</span> Trip Entry
+      <span class="nav-badge">3</span>
+    </div>
+
+    <div class="nav-label">Finance</div>
+    <div class="nav-item" onclick="showPage('creditor',this)">
+      <span class="nav-icon">🏦</span> Creditor Records
+    </div>
+    <div class="nav-item" onclick="showPage('entries',this)">
+      <span class="nav-icon">📋</span> All Entries
+    </div>
+
+    <div class="nav-label">Setup</div>
+    <div class="nav-item" onclick="showPage('master',this)">
+      <span class="nav-icon">⚙️</span> Master Data
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="avatar">RJ</div>
+      <div class="user-info">
+        <div class="user-name">Rajan Mehta</div>
+        <div class="user-role">Fleet Manager</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="page-title" id="topbar-title">Dashboard</div>
+    <div class="topbar-search">
+      <span>🔍</span>
+      <input type="text" placeholder="Search anything...">
+    </div>
+    <div class="topbar-icon-btn">
+      🔔
+      <div class="notif-dot"></div>
+    </div>
+    <div class="topbar-icon-btn">🌙</div>
+    <button class="topbar-btn" id="topbar-action" onclick="handleTopbarAction()">
+      + New Trip
+    </button>
+  </div>
+
+  <div class="content">
+
+    <!-- ══════════ DASHBOARD PAGE ══════════ -->
+    <div class="page active" id="page-dashboard">
+      <!-- KPIs -->
+      <div class="kpi-grid">
+        <div class="kpi-card orange">
+          <div class="kpi-label"><span class="dot" style="background:var(--accent)"></span> Total Fuel Used</div>
+          <div class="kpi-value">48,260<span style="font-size:14px;font-weight:400;color:var(--muted)"> L</span></div>
+          <div class="kpi-sub">
+            <span class="kpi-change up">▲ 8.4%</span> vs last month
+          </div>
+          <div class="kpi-icon">⛽</div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-label"><span class="dot" style="background:var(--green)"></span> Active Trips</div>
+          <div class="kpi-value">14</div>
+          <div class="kpi-sub">
+            <span class="kpi-change up">▲ 2</span> since yesterday
+          </div>
+          <div class="kpi-icon">🚛</div>
+        </div>
+        <div class="kpi-card blue">
+          <div class="kpi-label"><span class="dot" style="background:var(--blue)"></span> Total Spend</div>
+          <div class="kpi-value">₹6.2<span style="font-size:14px;font-weight:400;color:var(--muted)">L</span></div>
+          <div class="kpi-sub">
+            <span class="kpi-change down">▼ 2.1%</span> vs last month
+          </div>
+          <div class="kpi-icon">💰</div>
+        </div>
+        <div class="kpi-card purple">
+          <div class="kpi-label"><span class="dot" style="background:var(--purple)"></span> Avg Mileage</div>
+          <div class="kpi-value">6.8<span style="font-size:14px;font-weight:400;color:var(--muted)"> km/L</span></div>
+          <div class="kpi-sub">
+            <span class="kpi-change up">▲ 0.3</span> vs last month
+          </div>
+          <div class="kpi-icon">📍</div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Fuel Consumption Trend</div>
+              <div class="chart-sub">Monthly litres dispensed</div>
+            </div>
+            <div class="chart-tabs">
+              <div class="chart-tab active">6M</div>
+              <div class="chart-tab">1Y</div>
+              <div class="chart-tab">ALL</div>
+            </div>
+          </div>
+          <canvas id="fuelTrendChart"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Fuel by Vehicle</div>
+              <div class="chart-sub">Distribution this month</div>
+            </div>
+          </div>
+          <canvas id="fuelPieChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Bottom Grid -->
+      <div class="bottom-grid">
+        <!-- Recent Trips -->
+        <div class="table-card">
+          <div class="table-head">
+            <div class="table-title">Recent Trips</div>
+            <div class="view-all" onclick="showPage('entries',document.querySelector('[onclick*=entries]'))">VIEW ALL →</div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>TRIP ID</th>
+                <th>VEHICLE</th>
+                <th>DRIVER</th>
+                <th>FUEL (L)</th>
+                <th>STATUS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="td-main">#T-2841</td>
+                <td>GJ05-XA-1234</td>
+                <td>Dilip Patel</td>
+                <td>80</td>
+                <td><span class="badge badge-green">Completed</span></td>
+              </tr>
+              <tr>
+                <td class="td-main">#T-2840</td>
+                <td>GJ05-YB-5678</td>
+                <td>Ramu Verma</td>
+                <td>120</td>
+                <td><span class="badge badge-orange">In Transit</span></td>
+              </tr>
+              <tr>
+                <td class="td-main">#T-2839</td>
+                <td>GJ05-ZC-9012</td>
+                <td>Suresh Kumar</td>
+                <td>60</td>
+                <td><span class="badge badge-green">Completed</span></td>
+              </tr>
+              <tr>
+                <td class="td-main">#T-2838</td>
+                <td>GJ05-WD-3456</td>
+                <td>Ajay Singh</td>
+                <td>95</td>
+                <td><span class="badge badge-red">Overdue</span></td>
+              </tr>
+              <tr>
+                <td class="td-main">#T-2837</td>
+                <td>GJ05-VE-7890</td>
+                <td>Nikhil Shah</td>
+                <td>110</td>
+                <td><span class="badge badge-green">Completed</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Vehicle Status -->
+        <div class="table-card">
+          <div class="table-head">
+            <div class="table-title">Vehicle Fuel Status</div>
+            <div class="view-all">MANAGE →</div>
+          </div>
+          <div class="vehicle-list">
+            <div class="vehicle-item">
+              <div class="veh-icon">🚛</div>
+              <div style="flex:1">
+                <div class="veh-name">Tata Signa 4825</div>
+                <div class="veh-plate">GJ05-XA-1234</div>
+              </div>
+              <div class="veh-bar-wrap" style="max-width:90px">
+                <div class="veh-bar-label"><span>Fuel</span><span style="color:var(--green)">72%</span></div>
+                <div class="veh-bar"><div class="veh-bar-fill" style="width:72%;background:var(--green)"></div></div>
+              </div>
+            </div>
+            <div class="vehicle-item">
+              <div class="veh-icon">🚌</div>
+              <div style="flex:1">
+                <div class="veh-name">Ashok Leyland 2518</div>
+                <div class="veh-plate">GJ05-YB-5678</div>
+              </div>
+              <div class="veh-bar-wrap" style="max-width:90px">
+                <div class="veh-bar-label"><span>Fuel</span><span style="color:var(--accent)">38%</span></div>
+                <div class="veh-bar"><div class="veh-bar-fill" style="width:38%;background:var(--accent)"></div></div>
+              </div>
+            </div>
+            <div class="vehicle-item">
+              <div class="veh-icon">🚛</div>
+              <div style="flex:1">
+                <div class="veh-name">Mahindra Blazo</div>
+                <div class="veh-plate">GJ05-ZC-9012</div>
+              </div>
+              <div class="veh-bar-wrap" style="max-width:90px">
+                <div class="veh-bar-label"><span>Fuel</span><span style="color:var(--red)">12%</span></div>
+                <div class="veh-bar"><div class="veh-bar-fill" style="width:12%;background:var(--red)"></div></div>
+              </div>
+            </div>
+            <div class="vehicle-item">
+              <div class="veh-icon">🚚</div>
+              <div style="flex:1">
+                <div class="veh-name">Eicher Pro 6031</div>
+                <div class="veh-plate">GJ05-WD-3456</div>
+              </div>
+              <div class="veh-bar-wrap" style="max-width:90px">
+                <div class="veh-bar-label"><span>Fuel</span><span style="color:var(--green)">85%</span></div>
+                <div class="veh-bar"><div class="veh-bar-fill" style="width:85%;background:var(--green)"></div></div>
+              </div>
+            </div>
+            <div class="vehicle-item">
+              <div class="veh-icon">🚛</div>
+              <div style="flex:1">
+                <div class="veh-name">Volvo FH 440</div>
+                <div class="veh-plate">GJ05-VE-7890</div>
+              </div>
+              <div class="veh-bar-wrap" style="max-width:90px">
+                <div class="veh-bar-label"><span>Fuel</span><span style="color:var(--accent)">54%</span></div>
+                <div class="veh-bar"><div class="veh-bar-fill" style="width:54%;background:var(--accent)"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ TRIP ENTRY PAGE ══════════ -->
+    <div class="page" id="page-trip">
+      <div class="page-head">
+        <div>
+          <div class="page-head-title">New Trip Entry</div>
+          <div class="page-head-sub">Record fuel fill, mileage and trip details</div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-secondary">📥 Import CSV</button>
+          <button class="btn btn-primary">+ Add Entry</button>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="section-header">
+          <div class="section-num">1</div>
+          <div class="section-title">Trip Information</div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Trip ID</label>
+            <input type="text" value="#T-2842" readonly style="color:var(--muted)">
+          </div>
+          <div class="form-group">
+            <label>Trip Date</label>
+            <input type="date" value="2026-03-30">
+          </div>
+          <div class="form-group">
+            <label>Trip Type</label>
+            <select>
+              <option>Local</option>
+              <option>Outstation</option>
+              <option>Return</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>From Location</label>
+            <input type="text" placeholder="e.g. Surat Depot">
+          </div>
+          <div class="form-group">
+            <label>To Location</label>
+            <input type="text" placeholder="e.g. Mumbai Hub">
+          </div>
+          <div class="form-group">
+            <label>Distance (km)</label>
+            <div class="input-unit">
+              <input type="number" placeholder="0">
+              <span class="unit-label">km</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="section-header">
+          <div class="section-num">2</div>
+          <div class="section-title">Vehicle & Driver</div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Vehicle</label>
+            <select>
+              <option>GJ05-XA-1234 — Tata Signa 4825</option>
+              <option>GJ05-YB-5678 — Ashok Leyland 2518</option>
+              <option>GJ05-ZC-9012 — Mahindra Blazo</option>
+              <option>GJ05-WD-3456 — Eicher Pro 6031</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Driver</label>
+            <select>
+              <option>Dilip Patel</option>
+              <option>Ramu Verma</option>
+              <option>Suresh Kumar</option>
+              <option>Ajay Singh</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Opening Odometer (km)</label>
+            <div class="input-unit">
+              <input type="number" placeholder="125430">
+              <span class="unit-label">km</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Closing Odometer (km)</label>
+            <div class="input-unit">
+              <input type="number" placeholder="125810">
+              <span class="unit-label">km</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Helper (optional)</label>
+            <select>
+              <option value="">— None —</option>
+              <option>Ramesh B.</option>
+              <option>Kamlesh D.</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Supervisor</label>
+            <input type="text" placeholder="Name">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="section-header">
+          <div class="section-num">3</div>
+          <div class="section-title">Fuel Details</div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Fuel Station</label>
+            <select>
+              <option>HPCL — Varachha Rd</option>
+              <option>BPCL — Ring Road</option>
+              <option>Indian Oil — Adajan</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Fuel Type</label>
+            <select>
+              <option>Diesel</option>
+              <option>Petrol</option>
+              <option>CNG</option>
+              <option>EV Charge</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Quantity (Litres)</label>
+            <div class="input-unit">
+              <input type="number" placeholder="0.00">
+              <span class="unit-label">L</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Rate per Litre (₹)</label>
+            <div class="input-unit">
+              <input type="number" placeholder="92.50">
+              <span class="unit-label">₹/L</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Total Amount (₹)</label>
+            <div class="input-unit">
+              <input type="number" placeholder="Auto calculated" readonly style="color:var(--muted)">
+              <span class="unit-label">₹</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Payment Mode</label>
+            <select>
+              <option>Cash</option>
+              <option>Card</option>
+              <option>Fleet Card</option>
+              <option>Credit (Creditor)</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Remarks</label>
+            <textarea placeholder="Any notes about this trip or fuel fill..."></textarea>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-ghost">Clear</button>
+          <button class="btn btn-secondary">Save Draft</button>
+          <button class="btn btn-primary">✓ Submit Entry</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ CREDITOR RECORDS PAGE ══════════ -->
+    <div class="page" id="page-creditor">
+      <div class="page-head">
+        <div>
+          <div class="page-head-title">Creditor Records</div>
+          <div class="page-head-sub">Outstanding balances and payment history</div>
+        </div>
+        <button class="btn btn-primary">+ Add Creditor</button>
+      </div>
+
+      <div class="creditor-summary">
+        <div class="cred-stat">
+          <div class="cred-stat-val" style="color:var(--red)">₹3,84,200</div>
+          <div class="cred-stat-lbl">Total Outstanding</div>
+        </div>
+        <div class="cred-stat">
+          <div class="cred-stat-val" style="color:var(--green)">₹1,20,500</div>
+          <div class="cred-stat-lbl">Paid This Month</div>
+        </div>
+        <div class="cred-stat">
+          <div class="cred-stat-val" style="color:var(--accent)">8</div>
+          <div class="cred-stat-lbl">Active Creditors</div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="toolbar-search">
+          <span style="color:var(--muted)">🔍</span>
+          <input type="text" placeholder="Search creditors...">
+        </div>
+        <div class="toolbar-filter">⚡ Filter <span style="color:var(--muted)">▾</span></div>
+        <div class="toolbar-spacer"></div>
+        <button class="btn btn-secondary">📊 Statement</button>
+        <button class="btn btn-secondary">⬇ Export</button>
+      </div>
+
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>CREDITOR</th>
+              <th>TYPE</th>
+              <th>CREDIT LIMIT</th>
+              <th>USED</th>
+              <th>OUTSTANDING</th>
+              <th>LAST TXN</th>
+              <th>STATUS</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><div class="td-main">HPCL Fuel Station</div><div style="font-size:11px;color:var(--muted)">+91-98765-43210</div></td>
+              <td>Fuel Station</td>
+              <td>₹2,00,000</td>
+              <td>₹1,42,600</td>
+              <td class="td-main" style="color:var(--red)">₹1,42,600</td>
+              <td style="font-size:11px">28 Mar 2026</td>
+              <td><span class="badge badge-red">Overdue</span></td>
+              <td><button class="btn btn-secondary" style="padding:5px 10px;font-size:11px">Pay</button></td>
+            </tr>
+            <tr>
+              <td><div class="td-main">BPCL Ring Road</div><div style="font-size:11px;color:var(--muted)">+91-87654-32109</div></td>
+              <td>Fuel Station</td>
+              <td>₹1,50,000</td>
+              <td>₹98,400</td>
+              <td class="td-main" style="color:var(--accent)">₹98,400</td>
+              <td style="font-size:11px">25 Mar 2026</td>
+              <td><span class="badge badge-orange">Due Soon</span></td>
+              <td><button class="btn btn-secondary" style="padding:5px 10px;font-size:11px">Pay</button></td>
+            </tr>
+            <tr>
+              <td><div class="td-main">Indian Oil Adajan</div><div style="font-size:11px;color:var(--muted)">+91-76543-21098</div></td>
+              <td>Fuel Station</td>
+              <td>₹1,00,000</td>
+              <td>₹43,200</td>
+              <td class="td-main">₹43,200</td>
+              <td style="font-size:11px">22 Mar 2026</td>
+              <td><span class="badge badge-green">Current</span></td>
+              <td><button class="btn btn-secondary" style="padding:5px 10px;font-size:11px">Pay</button></td>
+            </tr>
+            <tr>
+              <td><div class="td-main">Tyre Works Ltd.</div><div style="font-size:11px;color:var(--muted)">+91-65432-10987</div></td>
+              <td>Parts Vendor</td>
+              <td>₹75,000</td>
+              <td>₹75,000</td>
+              <td class="td-main" style="color:var(--red)">₹75,000</td>
+              <td style="font-size:11px">15 Mar 2026</td>
+              <td><span class="badge badge-red">Overdue</span></td>
+              <td><button class="btn btn-secondary" style="padding:5px 10px;font-size:11px">Pay</button></td>
+            </tr>
+            <tr>
+              <td><div class="td-main">Speedway Lubricants</div><div style="font-size:11px;color:var(--muted)">+91-54321-09876</div></td>
+              <td>Lubricants</td>
+              <td>₹50,000</td>
+              <td>₹25,000</td>
+              <td class="td-main">₹25,000</td>
+              <td style="font-size:11px">29 Mar 2026</td>
+              <td><span class="badge badge-green">Current</span></td>
+              <td><button class="btn btn-secondary" style="padding:5px 10px;font-size:11px">Pay</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══════════ MASTER DATA PAGE ══════════ -->
+    <div class="page" id="page-master">
+      <div class="page-head">
+        <div>
+          <div class="page-head-title">Master Data</div>
+          <div class="page-head-sub">Manage reference data used across the system</div>
+        </div>
+      </div>
+
+      <div class="master-grid">
+        <!-- Vehicles -->
+        <div class="master-card">
+          <div class="master-card-head">
+            <div class="master-card-title"><span class="master-icon">🚛</span> Vehicles</div>
+            <span class="master-count">5 records</span>
+          </div>
+          <div class="master-list">
+            <div class="master-item">
+              <div><div class="master-item-name">Tata Signa 4825</div><div class="master-item-sub">GJ05-XA-1234</div></div>
+              <div class="master-actions"><button class="icon-btn">✏️</button><button class="icon-btn">🗑️</button></div>
+            </div>
+            <div class="master-item">
+              <div><div class="master-item-name">Ashok Leyland 2518</div><div class="master-item-sub">GJ05-YB-5678</div></div>
+              <div class="master-actions"><button class="icon-btn">✏️</button><button class="icon-btn">🗑️</button></div>
+            </div>
+            <div class="master-item">
+              <div><div class="master-item-name">Mahindra Blazo X 28</div><div class="master-item-sub">GJ05-ZC-9012</div></div>
+              <div class="master-actions"><button class="icon-btn">✏️</button><button class="icon-btn">🗑️</button></div>
+            </div>
+            <div class="master-item">
+              <div><div class="master-item-name">Eicher Pro 6031</div><div class="master-item-sub">GJ05-WD-3456</div></div>
+              <div class="master-actions"><button class="icon-btn">✏️</button><button class="icon-btn">🗑️</button></div>
+            </div>
+          </div>
+          <div class="master-add">+ Add Vehicle</div>
+        </div>
+
+        <!-- Drivers -->
+        <div class="master-card">
+          <div class="master-card-head">
+            <div class="master-card-title"><span class="master-icon">👤</span> Drivers</div>
+            <span class="master-count">7 records</span>
+          </div>
+          <div class="master-list">
+            <div class="master-item">
+              <div><div class="master-item-name">Dilip Patel</div><div class="master-item-sub">DL-GJ-20180234</div></div>
+              <div class="master-actions"><button class="icon-btn">✏️</button><button class="icon-btn">🗑️</button></div>
+            </div>
+            <div class="master-item">
+              <div><div class="master-item-name">Ramu Verma</div><div class="master-item-sub">DL-GJ-20150891</div></div>
+              <div class="master-actions"><button class="icon-btn">✏️</button><button class="icon-btn">🗑️</button></div>
+            </div>
+            <div class="master-item">
+              <div><div class="master-item-name">Suresh Kumar</div><div class="master-item-sub">DL-GJ-20191456</div></div>
+              <div class="master-actions"><button class="icon-btn">✏️</button><button class="icon-btn">🗑️</button></div>
+            </div>
+            <div class="master-item">
+              <div><div class="master-item-name">Ajay Singh</div><div class="master-item-sub">DL-GJ-20120678</div></div>
+              <div class="master-actions"><button class="icon-btn">✏️</button><button class="icon-btn">🗑️</button></div>
+            </div>
+          </div>
+          <div class="master-add">+ Add Driver</div>
+        </div>
+
+        <!-- Fuel Stations -->
+        <div class="master-card">
+          <div class="master-card-head">
+            <div class="master-card-title"><span class="master-icon">⛽</span> Fuel Stations</div>
+            <span class="master-count">6 records</span>
+          </div>
+          <div class="master-list">
+            <div class="master-item">
+              <div><div class="master-item-name">HPCL — Varachha Rd</div><div class="master-item-sub">Diesel • Petrol</div></div>
+              <div class="master-actions"><button class="icon-btn">✏️</button><button class="icon-btn">🗑️</button></div>
+            </div>
+            <div class="master-item">
+              <div><div class="master-item-name">BPCL Ring Road</div><div class="master-item-sub">Diesel • Petrol • CNG</div></div>
+              <div class="master-actions"><button class="icon-btn">✏️</button><button class="icon-btn">🗑️</button></div>
+            </div>
+            <div class="master-item">
+              <div><div class="master-item-name">Indian Oil Adajan</div><div class="master-item-sub">Diesel • Petrol</div></div>
+              <div class="master-actions"><button class="icon-btn">✏️</button><button class="icon-btn">🗑️</button></div>
+            </div>
+            <div class="master-item">
+              <div><div class="master-item-name">HP Udhna Bypass</div><div class="master-item-sub">Diesel • CNG</div></div>
+              <div class="master-actions"><button class="icon-btn">✏️</button><button class="icon-btn">🗑️</button></div>
+            </div>
+          </div>
+          <div class="master-add">+ Add Station</div>
+        </div>
+
+        <!-- Routes -->
+        <div class="master-card">
+          <div class="master-card-head">
+            <div class="master-card-title"><span class="master-icon">🗺️</span> Routes</div>
+            <span class="master-count">9 records</span>
+          </div>
+          <div class="master-list">
+            <div class="master-item">
+              <div><div class="master-item-name">Surat → Mumbai</div><div class="master-item-sub">285 km • NH-48</div></div>
+              <div class="master-actions"><button class="icon-btn">✏️</button><button class="icon-btn">🗑️</button></div>
+            </div>
+            <div class="master-item">
+              <div><div class="master-item-name">Surat → Ahmedabad</div><div class="master-item-sub">263 km • NH-48</div></div>
+              <div class="master-actions"><button class="icon-btn">✏️</button><button class="icon-btn">🗑️</button></div>
+            </div>
+            <div class="master-item">
+              <div><div class="master-item-name">Surat → Pune</div><div class="master-item-sub">398 km • NH-48</div></div>
+              <div class="master-actions"><button class="icon-btn">✏️</button><button class="icon-btn">🗑️</button></div>
+            </div>
+          </div>
+          <div class="master-add">+ Add Route</div>
+        </div>
+
+        <!-- Expense Types -->
+        <div class="master-card">
+          <div class="master-card-head">
+            <div class="master-card-title"><span class="master-icon">🧾</span> Expense Types</div>
+            <span class="master-count">8 records</span>
+          </div>
+          <div class="master-list">
+            <div class="master-item">
+              <div><div class="master-item-name">Fuel</div><div class="master-item-sub">Category: Operations</div></div>
+              <div class="master-actions"><button class="icon-btn">✏️</button><button class="icon-btn">🗑️</button></div>
+            </div>
+            <div class="master-item">
+              <div><div class="master-item-name">Toll Tax</div><div class="master-item-sub">Category: Compliance</div></div>
+              <div class="master-actions"><button class="icon-btn">✏️</button><button class="icon-btn">🗑️</button></div>
+            </div>
+            <div class="master-item">
+              <div><div class="master-item-name">Driver Allowance</div><div class="master-item-sub">Category: HR</div></div>
+              <div class="master-actions"><button class="icon-btn">✏️</button><button class="icon-btn">🗑️</button></div>
+            </div>
+            <div class="master-item">
+              <div><div class="master-item-name">Tyre Replacement</div><div class="master-item-sub">Category: Maintenance</div></div>
+              <div class="master-actions"><button class="icon-btn">✏️</button><button class="icon-btn">🗑️</button></div>
+            </div>
+          </div>
+          <div class="master-add">+ Add Expense Type</div>
+        </div>
+
+        <!-- Departments -->
+        <div class="master-card">
+          <div class="master-card-head">
+            <div class="master-card-title"><span class="master-icon">🏢</span> Departments</div>
+            <span class="master-count">4 records</span>
+          </div>
+          <div class="master-list">
+            <div class="master-item">
+              <div><div class="master-item-name">Operations</div><div class="master-item-sub">14 vehicles assigned</div></div>
+              <div class="master-actions"><button class="icon-btn">✏️</button><button class="icon-btn">🗑️</button></div>
+            </div>
+            <div class="master-item">
+              <div><div class="master-item-name">Logistics</div><div class="master-item-sub">8 vehicles assigned</div></div>
+              <div class="master-actions"><button class="icon-btn">✏️</button><button class="icon-btn">🗑️</button></div>
+            </div>
+            <div class="master-item">
+              <div><div class="master-item-name">Maintenance</div><div class="master-item-sub">Workshop</div></div>
+              <div class="master-actions"><button class="icon-btn">✏️</button><button class="icon-btn">🗑️</button></div>
+            </div>
+          </div>
+          <div class="master-add">+ Add Department</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ ALL ENTRIES PAGE ══════════ -->
+    <div class="page" id="page-entries">
+      <div class="page-head">
+        <div>
+          <div class="page-head-title">All Entries</div>
+          <div class="page-head-sub">Complete fuel transaction log</div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-secondary">📊 Report</button>
+          <button class="btn btn-secondary">⬇ Export</button>
+          <button class="btn btn-primary">+ New Entry</button>
+        </div>
+      </div>
+
+      <div class="entries-stats">
+        <div class="estat"><strong>2,841</strong> Total Entries</div>
+        <div class="estat"><strong>₹62.4L</strong> Total Value</div>
+        <div class="estat"><strong>4,82,600 L</strong> Total Fuel</div>
+        <div class="estat" style="margin-left:auto">
+          <span style="color:var(--muted)">Period:</span>
+          <select style="padding:4px 8px;font-size:12px;width:auto">
+            <option>March 2026</option>
+            <option>February 2026</option>
+            <option>January 2026</option>
+            <option>All Time</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="toolbar-search">
+          <span style="color:var(--muted)">🔍</span>
+          <input type="text" placeholder="Search trip, vehicle, driver...">
+        </div>
+        <div class="toolbar-filter">🚛 Vehicle <span style="color:var(--muted)">▾</span></div>
+        <div class="toolbar-filter">👤 Driver <span style="color:var(--muted)">▾</span></div>
+        <div class="toolbar-filter">📅 Date Range <span style="color:var(--muted)">▾</span></div>
+        <div class="toolbar-filter">✅ Status <span style="color:var(--muted)">▾</span></div>
+      </div>
+
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>TRIP ID</th>
+              <th>DATE</th>
+              <th>VEHICLE</th>
+              <th>DRIVER</th>
+              <th>ROUTE</th>
+              <th>FUEL (L)</th>
+              <th>AMOUNT (₹)</th>
+              <th>MILEAGE</th>
+              <th>PAYMENT</th>
+              <th>STATUS</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="td-main">#T-2841</td>
+              <td style="font-size:11px;color:var(--muted)">30 Mar 2026</td>
+              <td>GJ05-XA-1234</td>
+              <td>Dilip Patel</td>
+              <td style="font-size:11px">Surat → Mumbai</td>
+              <td class="td-main">80 L</td>
+              <td class="td-main">₹7,400</td>
+              <td style="color:var(--green)">7.1 km/L</td>
+              <td><span class="badge badge-blue">Fleet Card</span></td>
+              <td><span class="badge badge-green">Completed</span></td>
+              <td><button class="icon-btn">👁️</button></td>
+            </tr>
+            <tr>
+              <td class="td-main">#T-2840</td>
+              <td style="font-size:11px;color:var(--muted)">29 Mar 2026</td>
+              <td>GJ05-YB-5678</td>
+              <td>Ramu Verma</td>
+              <td style="font-size:11px">Surat → Ahmedabad</td>
+              <td class="td-main">120 L</td>
+              <td class="td-main">₹11,100</td>
+              <td style="color:var(--accent)">6.5 km/L</td>
+              <td><span class="badge badge-orange">Credit</span></td>
+              <td><span class="badge badge-orange">In Transit</span></td>
+              <td><button class="icon-btn">👁️</button></td>
+            </tr>
+            <tr>
+              <td class="td-main">#T-2839</td>
+              <td style="font-size:11px;color:var(--muted)">29 Mar 2026</td>
+              <td>GJ05-ZC-9012</td>
+              <td>Suresh Kumar</td>
+              <td style="font-size:11px">Surat → Pune</td>
+              <td class="td-main">60 L</td>
+              <td class="td-main">₹5,550</td>
+              <td style="color:var(--green)">7.4 km/L</td>
+              <td><span class="badge badge-green">Cash</span></td>
+              <td><span class="badge badge-green">Completed</span></td>
+              <td><button class="icon-btn">👁️</button></td>
+            </tr>
+            <tr>
+              <td class="td-main">#T-2838</td>
+              <td style="font-size:11px;color:var(--muted)">28 Mar 2026</td>
+              <td>GJ05-WD-3456</td>
+              <td>Ajay Singh</td>
+              <td style="font-size:11px">Surat → Mumbai</td>
+              <td class="td-main">95 L</td>
+              <td class="td-main">₹8,788</td>
+              <td style="color:var(--red)">5.9 km/L</td>
+              <td><span class="badge badge-orange">Credit</span></td>
+              <td><span class="badge badge-red">Overdue</span></td>
+              <td><button class="icon-btn">👁️</button></td>
+            </tr>
+            <tr>
+              <td class="td-main">#T-2837</td>
+              <td style="font-size:11px;color:var(--muted)">28 Mar 2026</td>
+              <td>GJ05-VE-7890</td>
+              <td>Nikhil Shah</td>
+              <td style="font-size:11px">Surat → Ahmedabad</td>
+              <td class="td-main">110 L</td>
+              <td class="td-main">₹10,175</td>
+              <td style="color:var(--green)">7.2 km/L</td>
+              <td><span class="badge badge-blue">Fleet Card</span></td>
+              <td><span class="badge badge-green">Completed</span></td>
+              <td><button class="icon-btn">👁️</button></td>
+            </tr>
+            <tr>
+              <td class="td-main">#T-2836</td>
+              <td style="font-size:11px;color:var(--muted)">27 Mar 2026</td>
+              <td>GJ05-XA-1234</td>
+              <td>Dilip Patel</td>
+              <td style="font-size:11px">Surat → Mumbai</td>
+              <td class="td-main">75 L</td>
+              <td class="td-main">₹6,938</td>
+              <td style="color:var(--green)">7.0 km/L</td>
+              <td><span class="badge badge-green">Cash</span></td>
+              <td><span class="badge badge-green">Completed</span></td>
+              <td><button class="icon-btn">👁️</button></td>
+            </tr>
+            <tr>
+              <td class="td-main">#T-2835</td>
+              <td style="font-size:11px;color:var(--muted)">27 Mar 2026</td>
+              <td>GJ05-YB-5678</td>
+              <td>Ramu Verma</td>
+              <td style="font-size:11px">Surat → Pune</td>
+              <td class="td-main">130 L</td>
+              <td class="td-main">₹12,025</td>
+              <td style="color:var(--accent)">6.3 km/L</td>
+              <td><span class="badge badge-orange">Credit</span></td>
+              <td><span class="badge badge-green">Completed</span></td>
+              <td><button class="icon-btn">👁️</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;font-size:12px;color:var(--muted)">
+        <div>Showing 7 of 2,841 entries</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px">← Prev</button>
+          <button class="btn btn-primary" style="padding:6px 14px;font-size:12px">1</button>
+          <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px">2</button>
+          <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px">3</button>
+          <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px">...</button>
+          <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px">Next →</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+const pageConfig = {
+  dashboard: { title: 'Dashboard', action: '+ New Trip' },
+  trip:      { title: 'Trip Entry', action: '+ Add Entry' },
+  creditor:  { title: 'Creditor Records', action: '+ Add Creditor' },
+  master:    { title: 'Master Data', action: '+ Add Record' },
+  entries:   { title: 'All Entries', action: '⬇ Export' },
+};
+
+function showPage(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  el.classList.add('active');
+  const cfg = pageConfig[name];
+  document.getElementById('topbar-title').textContent = cfg.title;
+  document.getElementById('topbar-action').textContent = cfg.action;
+}
+
+function handleTopbarAction() {
+  const active = document.querySelector('.nav-item.active');
+  if (active && active.textContent.includes('Dashboard')) showPage('trip', document.querySelector('[onclick*=trip]'));
+}
+
+// Chart.js defaults
+Chart.defaults.color = '#6b7280';
+Chart.defaults.borderColor = '#1e2330';
+Chart.defaults.font.family = "'DM Mono', monospace";
+
+// Fuel Trend Chart
+const trendCtx = document.getElementById('fuelTrendChart').getContext('2d');
+const gradient = trendCtx.createLinearGradient(0, 0, 0, 200);
+gradient.addColorStop(0, 'rgba(245,166,35,0.3)');
+gradient.addColorStop(1, 'rgba(245,166,35,0)');
+
+new Chart(trendCtx, {
+  type: 'line',
+  data: {
+    labels: ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'],
+    datasets: [{
+      label: 'Fuel (L)',
+      data: [38400, 41200, 36800, 44100, 44500, 48260],
+      borderColor: '#f5a623',
+      backgroundColor: gradient,
+      borderWidth: 2,
+      tension: 0.4,
+      pointRadius: 4,
+      pointBackgroundColor: '#f5a623',
+      fill: true,
+    }, {
+      label: 'Target (L)',
+      data: [40000, 40000, 40000, 45000, 45000, 46000],
+      borderColor: 'rgba(107,114,128,0.4)',
+      backgroundColor: 'transparent',
+      borderWidth: 1.5,
+      borderDash: [5, 5],
+      tension: 0.4,
+      pointRadius: 0,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 10 } } },
+      y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 10 }, callback: v => (v/1000).toFixed(0)+'k' } }
+    }
+  }
+});
+
+// Pie Chart
+const pieCtx = document.getElementById('fuelPieChart').getContext('2d');
+new Chart(pieCtx, {
+  type: 'doughnut',
+  data: {
+    labels: ['Tata Signa', 'Ashok Leyland', 'Mahindra Blazo', 'Eicher Pro', 'Volvo FH'],
+    datasets: [{
+      data: [28, 22, 18, 20, 12],
+      backgroundColor: ['#f5a623', '#2de08a', '#4fa3ff', '#a78bfa', '#ff5252'],
+      borderWidth: 0,
+      hoverOffset: 8,
+    }]
+  },
+  options: {
+    responsive: true,
+    cutout: '68%',
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: { usePointStyle: true, pointStyle: 'circle', padding: 12, font: { size: 10 } }
+      }
+    }
+  }
+});
+
+// Chart tab switching (visual only)
+document.querySelectorAll('.chart-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    tab.closest('.chart-tabs').querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>
