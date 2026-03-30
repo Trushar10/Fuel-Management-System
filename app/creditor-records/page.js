@@ -188,6 +188,9 @@ export default function FuelCostPage() {
 
   const handleSubmit = async e => {
     e.preventDefault();
+    if (!vehicles.some(v => v.number.toLowerCase() === form.truck_no.trim().toLowerCase())) { showToast('Truck No. must be selected from master data', 'error'); return; }
+    if (!drivers.some(d => d.name.toLowerCase() === form.driver_name.trim().toLowerCase())) { showToast('Driver Name must be selected from master data', 'error'); return; }
+    if (!places.some(p => p.name.toLowerCase() === form.filling_place.trim().toLowerCase())) { showToast('Place of Filling must be selected from master data', 'error'); return; }
     setLoading(true); setError(''); setSuccess('');
     try {
       const url = editId ? `/api/fuel-cost-entries/${editId}` : '/api/fuel-cost-entries';
