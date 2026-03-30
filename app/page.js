@@ -255,32 +255,6 @@ export default function Dashboard() {
                     </ResponsiveContainer>
                   </div>
                 </div>
-
-                {/* Daily Trips Chart */}
-                <div className="chart-card">
-                  <div className="chart-header">
-                    <div>
-                      <div className="chart-title">Daily Trip Count — {filterLabel}</div>
-                      <div className="chart-sub">{formatMonthLabel(month)}</div>
-                    </div>
-                  </div>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={daily} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                      <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#6b7280' }} interval={0} />
-                      <YAxis tick={{ fontSize: 10, fill: '#6b7280' }} allowDecimals={false} />
-                      <Tooltip
-                        contentStyle={tooltipStyle}
-                        labelFormatter={(day) => {
-                          const d = daily.find(x => x.day === day);
-                          return d ? d.date : `Day ${day}`;
-                        }}
-                        formatter={(v) => [v, 'Trips']}
-                      />
-                      <Bar dataKey="trip_count" fill="#2de08a" radius={[3, 3, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
               </>
             )}
           </>

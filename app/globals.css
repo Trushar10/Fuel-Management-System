@@ -185,7 +185,7 @@ body {
 .kpi-icon { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 32px; opacity: 0.07; }
 
 /* ── CHARTS ROW ── */
-.charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 22px; }
+.charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 22px; }
 .chart-card {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 12px; padding: 18px;
