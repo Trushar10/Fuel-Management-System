@@ -21,11 +21,10 @@ export default function Dashboard() {
   const [month, setMonth] = useState(getCurrentMonth());
   const [vehicle, setVehicle] = useState('');
   const [driver, setDriver] = useState('');
-  const [company, setCompany] = useState('');
 
   const [vehicles, setVehicles] = useState([]);
   const [drivers, setDrivers] = useState([]);
-  const [companies, setCompanies] = useState([]);
+  const [driversLoaded, setDriversLoaded] = useState(false);
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -42,20 +41,21 @@ export default function Dashboard() {
     Promise.all([
       fetch('/api/vehicles').then(r => r.json()),
       fetch('/api/drivers').then(r => r.json()),
-      fetch('/api/companies').then(r => r.json()),
-    ]).then(([v, d, c]) => {
+    ]).then(([v, d]) => {
       setVehicles(Array.isArray(v) ? v : []);
-      setDrivers(Array.isArray(d) ? d : []);
-      setCompanies(Array.isArray(c) ? c : []);
-    }).catch(() => {});
+      const driverList = Array.isArray(d) ? d : [];
+      setDrivers(driverList);
+      if (driverList.length > 0) setDriver(driverList[0].name);
+      setDriversLoaded(true);
+    }).catch(() => { setDriversLoaded(true); });
   }, []);
 
   const fetchData = useCallback(() => {
+    if (!driversLoaded) return;
     setLoading(true);
     const params = new URLSearchParams({ month });
     if (vehicle) params.set('truck_no', vehicle);
     if (driver) params.set('driver_name', driver);
-    if (company) params.set('company', company);
 
     fetch(`/api/fuel-entries/analytics/daily?${params}`)
       .then(r => r.json())
@@ -65,14 +65,13 @@ export default function Dashboard() {
       })
       .catch(err => showToast(err.message))
       .finally(() => setLoading(false));
-  }, [month, vehicle, driver, company]);
+  }, [month, vehicle, driver, driversLoaded]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleReset = () => {
     setVehicle('');
-    setDriver('');
-    setCompany('');
+    setDriver(drivers.length > 0 ? drivers[0].name : '');
   };
 
   const prevMonth = () => {
@@ -92,6 +91,8 @@ export default function Dashboard() {
   const isEmpty = !summary || summary.total_trips === 0;
 
   const tooltipStyle = { background: '#181c23', border: '1px solid #252b3a', borderRadius: 8, color: '#e8eaf0' };
+
+  const filterLabel = [driver, vehicle].filter(Boolean).join(' · ') || 'All';
 
   return (
     <>
@@ -128,22 +129,13 @@ export default function Dashboard() {
         <div className="form-card" style={{ padding: '16px 20px', marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
             <span style={{ fontWeight: 600, fontSize: 14 }}>🔍 Filters</span>
-            {(vehicle || driver || company) && (
+            {(vehicle || (driver && drivers.length > 0 && driver !== drivers[0].name)) && (
               <button onClick={handleReset} className="btn btn-secondary" style={{ fontSize: 11, padding: '3px 10px', marginLeft: 'auto' }}>
-                Clear All
+                Reset
               </button>
             )}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
-            <div>
-              <label className="form-label" style={{ fontSize: 12, marginBottom: 4 }}>Vehicle</label>
-              <select className="form-input" value={vehicle} onChange={e => setVehicle(e.target.value)}>
-                <option value="">All Vehicles</option>
-                {vehicles.map(v => (
-                  <option key={v.id} value={v.number}>{v.number}{v.brand ? ` (${v.brand})` : ''}</option>
-                ))}
-              </select>
-            </div>
             <div>
               <label className="form-label" style={{ fontSize: 12, marginBottom: 4 }}>Driver</label>
               <select className="form-input" value={driver} onChange={e => setDriver(e.target.value)}>
@@ -154,11 +146,11 @@ export default function Dashboard() {
               </select>
             </div>
             <div>
-              <label className="form-label" style={{ fontSize: 12, marginBottom: 4 }}>Company</label>
-              <select className="form-input" value={company} onChange={e => setCompany(e.target.value)}>
-                <option value="">All Companies</option>
-                {companies.map(c => (
-                  <option key={c.id} value={c.name}>{c.name}</option>
+              <label className="form-label" style={{ fontSize: 12, marginBottom: 4 }}>Vehicle</label>
+              <select className="form-input" value={vehicle} onChange={e => setVehicle(e.target.value)}>
+                <option value="">All Vehicles</option>
+                {vehicles.map(v => (
+                  <option key={v.id} value={v.number}>{v.number}{v.brand ? ` (${v.brand})` : ''}</option>
                 ))}
               </select>
             </div>
@@ -174,7 +166,7 @@ export default function Dashboard() {
                 <div style={{ fontSize: 48, marginBottom: 16, opacity: 0.3 }}>⛽</div>
                 <p style={{ color: 'var(--text)', fontWeight: 500, marginBottom: 4 }}>No data for {formatMonthLabel(month)}</p>
                 <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 20 }}>
-                  {vehicle || driver || company ? 'Try changing filters or selecting a different month' : 'No fuel entries found for this month'}
+                  {vehicle || driver ? 'Try changing filters or selecting a different month' : 'No fuel entries found for this month'}
                 </p>
                 <Link href="/add" className="btn btn-primary">+ Add Entry</Link>
               </div>
@@ -184,7 +176,7 @@ export default function Dashboard() {
                 <div className="chart-card" style={{ marginBottom: 16 }}>
                   <div className="chart-header">
                     <div>
-                      <div className="chart-title">Daily Avg Mileage (km/L)</div>
+                      <div className="chart-title">Daily Avg Mileage (km/L) — {filterLabel}</div>
                       <div className="chart-sub">{formatMonthLabel(month)} — {data.days_in_month} days</div>
                     </div>
                   </div>
@@ -212,7 +204,7 @@ export default function Dashboard() {
                   <div className="chart-card">
                     <div className="chart-header">
                       <div>
-                        <div className="chart-title">Daily Fuel Usage (L)</div>
+                        <div className="chart-title">Daily Fuel Usage (L) — {filterLabel}</div>
                         <div className="chart-sub">{formatMonthLabel(month)}</div>
                       </div>
                     </div>
@@ -241,7 +233,7 @@ export default function Dashboard() {
                   <div className="chart-card">
                     <div className="chart-header">
                       <div>
-                        <div className="chart-title">Daily Distance (km)</div>
+                        <div className="chart-title">Daily Distance (km) — {filterLabel}</div>
                         <div className="chart-sub">{formatMonthLabel(month)}</div>
                       </div>
                     </div>
@@ -268,7 +260,7 @@ export default function Dashboard() {
                 <div className="chart-card">
                   <div className="chart-header">
                     <div>
-                      <div className="chart-title">Daily Trip Count</div>
+                      <div className="chart-title">Daily Trip Count — {filterLabel}</div>
                       <div className="chart-sub">{formatMonthLabel(month)}</div>
                     </div>
                   </div>
