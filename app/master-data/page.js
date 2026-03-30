@@ -1,6 +1,30 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 
+/* ── Formatters ── */
+const titleCase = (str) => str.replace(/\b\w/g, c => c.toUpperCase()).replace(/(?<=\b\w)\w*/g, m => m.toLowerCase());
+
+const formatVehicleNumber = (raw) => {
+  const v = raw.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+  // Auto-insert dashes: XX-00-XX(X)-0000
+  let result = '';
+  let i = 0;
+  // Part 1: letters (state code)
+  while (i < v.length && /[A-Z]/.test(v[i])) { result += v[i++]; }
+  if (i < v.length) { result += '-'; }
+  // Part 2: digits (district)
+  while (i < v.length && /[0-9]/.test(v[i])) { result += v[i++]; }
+  if (i < v.length) { result += '-'; }
+  // Part 3: letters (series)
+  while (i < v.length && /[A-Z]/.test(v[i])) { result += v[i++]; }
+  if (i < v.length) { result += '-'; }
+  // Part 4: digits (number)
+  while (i < v.length && /[0-9]/.test(v[i])) { result += v[i++]; }
+  return result;
+};
+
+const phoneOnly = (str) => str.replace(/[^0-9]/g, '').slice(0, 10);
+
 function MasterSection({ title, icon, items, fields, apiUrl, onReload }) {
   const [adding, setAdding] = useState(false);
   const [editId, setEditId] = useState(null);
@@ -33,6 +57,12 @@ function MasterSection({ title, icon, items, fields, apiUrl, onReload }) {
   const cancel = () => { setAdding(false); setEditId(null); };
 
   const handleSave = async () => {
+    // Validate all fields required
+    const emptyField = fields.find(f => !form[f.name] || !String(form[f.name]).trim());
+    if (emptyField) { showToast(`${emptyField.placeholder} is required`, 'error'); return; }
+    // Validate phone fields (10 digits)
+    const phoneField = fields.find(f => f.inputMode === 'numeric');
+    if (phoneField && form[phoneField.name].length !== 10) { showToast('Phone number must be 10 digits', 'error'); return; }
     setSaving(true);
     try {
       const url = editId ? `${apiUrl}/${editId}` : apiUrl;
@@ -75,7 +105,14 @@ function MasterSection({ title, icon, items, fields, apiUrl, onReload }) {
             <div style={{ display: 'flex', gap: 8, flex: 1 }}>
               {fields.map(f => (
                 <input key={f.name} type={f.type || 'text'} placeholder={f.placeholder} value={form[f.name] || ''}
-                  onChange={e => setForm({ ...form, [f.name]: e.target.value })}
+                  inputMode={f.inputMode || undefined}
+                  maxLength={f.maxLength || undefined}
+                  required
+                  onChange={e => {
+                    let val = e.target.value;
+                    if (f.transform) val = f.transform(val);
+                    setForm({ ...form, [f.name]: val });
+                  }}
                   className="fc-input" style={{ flex: 1, padding: '6px 10px', fontSize: 12 }} />
               ))}
             </div>
@@ -97,7 +134,14 @@ function MasterSection({ title, icon, items, fields, apiUrl, onReload }) {
                 <div style={{ display: 'flex', gap: 8, flex: 1 }}>
                   {fields.map(f => (
                     <input key={f.name} type={f.type || 'text'} value={form[f.name] || ''}
-                      onChange={e => setForm({ ...form, [f.name]: e.target.value })}
+                      inputMode={f.inputMode || undefined}
+                      maxLength={f.maxLength || undefined}
+                      required
+                      onChange={e => {
+                        let val = e.target.value;
+                        if (f.transform) val = f.transform(val);
+                        setForm({ ...form, [f.name]: val });
+                      }}
                       className="fc-input" style={{ flex: 1, padding: '6px 10px', fontSize: 12 }} />
                   ))}
                 </div>
@@ -176,23 +220,23 @@ export default function MasterDataPage() {
             <MasterSection
               title="Drivers" icon="👤" items={drivers} apiUrl="/api/drivers" onReload={loadAll}
               fields={[
-                { name: 'name', placeholder: 'Driver name', bold: true },
-                { name: 'phone', placeholder: 'Phone number' },
-                { name: 'company', placeholder: 'Company name' },
+                { name: 'name', placeholder: 'Driver name', bold: true, transform: titleCase },
+                { name: 'phone', placeholder: 'Phone number', inputMode: 'numeric', maxLength: 10, transform: phoneOnly },
+                { name: 'company', placeholder: 'Company name', transform: titleCase },
               ]}
             />
             <MasterSection
               title="Vehicles" icon="🚛" items={vehicles} apiUrl="/api/vehicles" onReload={loadAll}
               fields={[
-                { name: 'number', placeholder: 'Vehicle number', bold: true },
-                { name: 'brand', placeholder: 'Brand name' },
-                { name: 'company', placeholder: 'Company name' },
+                { name: 'number', placeholder: 'e.g. GJ-30-HJ-0728', bold: true, transform: formatVehicleNumber },
+                { name: 'brand', placeholder: 'Brand name', transform: titleCase },
+                { name: 'company', placeholder: 'Company name', transform: titleCase },
               ]}
             />
             <MasterSection
               title="Filling Places" icon="⛽" items={places} apiUrl="/api/filling-places" onReload={loadAll}
               fields={[
-                { name: 'name', placeholder: 'Place name', bold: true },
+                { name: 'name', placeholder: 'Place name', bold: true, transform: titleCase },
               ]}
             />
             <MasterSection
