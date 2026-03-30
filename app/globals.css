@@ -293,6 +293,17 @@ input[type="tel"].fc-input, select.fc-select, textarea.fc-textarea {
 }
 .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
 
+/* ── Split layout (form + entries side by side) ───── */
+.split-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  align-items: start;
+}
+.split-left, .split-right { min-width: 0; }
+.split-right .table-card { margin-top: 0; }
+.split-right .toolbar { margin-bottom: 12px; }
+
 /* ── BUTTONS ── */
 .btn {
   padding: 9px 20px; border-radius: 8px; font-size: 13px; font-weight: 600;
@@ -443,5 +454,6 @@ input[type="tel"].fc-input, select.fc-select, textarea.fc-textarea {
   .form-grid { grid-template-columns: 1fr; }
   .form-grid-2 { grid-template-columns: 1fr; }
   .creditor-summary { grid-template-columns: 1fr; }
+  .split-layout { grid-template-columns: 1fr; }
   .content-area { padding: 16px; }
 }

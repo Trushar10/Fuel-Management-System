@@ -172,6 +172,8 @@ export default function FuelForm({ id }) {
           <div style={{ marginBottom: 14, padding: '12px 16px', background: 'rgba(45,224,138,0.1)', border: '1px solid rgba(45,224,138,0.2)', borderRadius: 8, color: 'var(--green)', fontSize: 13 }}>{success}</div>
         )}
 
+        <div className="split-layout">
+        <div className="split-left">
         <form onSubmit={handleSubmit}>
           {/* Section 1: Trip Information */}
           <div className="form-card">
@@ -297,15 +299,17 @@ export default function FuelForm({ id }) {
             </div>
           </div>
         </form>
+        </div>
 
         {/* Recent Entries */}
         {!isEdit && recentEntries.length > 0 && (
-          <div style={{ marginTop: 22 }}>
+          <div className="split-right">
             <div className="table-card">
               <div className="table-head">
                 <div className="table-title">Recent Entries</div>
                 <Link href="/entries" className="view-all">VIEW ALL →</Link>
               </div>
+              <div style={{ overflowX: 'auto' }}>
               <table>
                 <thead>
                   <tr>
@@ -336,9 +340,11 @@ export default function FuelForm({ id }) {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           </div>
         )}
+        </div>
       </div>
     </>
   );

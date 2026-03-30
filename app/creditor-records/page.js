@@ -217,6 +217,8 @@ export default function FuelCostPage() {
           <div style={{ marginBottom: 14, padding: '12px 16px', background: 'rgba(45,224,138,0.1)', border: '1px solid rgba(45,224,138,0.2)', borderRadius: 8, color: 'var(--green)', fontSize: 13 }}>{success}</div>
         )}
 
+        <div className="split-layout">
+        <div className="split-left">
         {/* Form */}
         <form onSubmit={handleSubmit} className="form-card" style={{ marginBottom: 22 }}>
           <div className="section-header">
@@ -301,7 +303,9 @@ export default function FuelCostPage() {
             </button>
           </div>
         </form>
+        </div>
 
+        <div className="split-right">
         {/* Filter & Table */}
         <form onSubmit={e => { e.preventDefault(); loadEntries(); }} className="toolbar">
           <div className="toolbar-search">
@@ -358,6 +362,8 @@ export default function FuelCostPage() {
             </table>
           </div>
         )}
+        </div>
+        </div>
       </div>
     </>
   );
