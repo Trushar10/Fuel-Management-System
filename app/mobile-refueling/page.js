@@ -237,7 +237,13 @@ export default function MRUPage() {
                   </div>
                   <div className="form-group">
                     <label>MRU Name</label>
-                    <select name="mru_name" value={form.mru_name} onChange={handleChange} required className="fc-input">
+                    <select name="mru_name" value={form.mru_name} onChange={e => {
+                      const name = e.target.value;
+                      const place = mruPlaces.find(p => p.name === name);
+                      const vehicle = place?.associate_vehicle || '';
+                      setForm(prev => ({ ...prev, mru_name: name, truck_no: vehicle || prev.truck_no }));
+                      if (vehicle) { setVehicleSearch(vehicle); setVehicleLocked(true); }
+                    }} required className="fc-input">
                       <option value="">Select Mobile Refueling Unit</option>
                       {mruPlaces.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
                     </select>
