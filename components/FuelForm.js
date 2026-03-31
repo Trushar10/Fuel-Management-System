@@ -114,6 +114,7 @@ export default function FuelForm({ id }) {
   const [vehicles, setVehicles] = useState([]);
   const [places, setPlaces] = useState([]);
   const [rentedVehicles, setRentedVehicles] = useState([]);
+  const [fuelRates, setFuelRates] = useState([]);
 
   const [driverLocked, setDriverLocked] = useState(false);
   const [vehicleLocked, setVehicleLocked] = useState(false);
@@ -135,11 +136,13 @@ export default function FuelForm({ id }) {
       fetch('/api/vehicles').then(r => r.json()),
       fetch('/api/filling-places').then(r => r.json()),
       fetch('/api/rented-vehicles').then(r => r.json()),
-    ]).then(([d, v, p, rv]) => {
+      fetch('/api/fuel-rates').then(r => r.json()),
+    ]).then(([d, v, p, rv, fr]) => {
       if (Array.isArray(d)) setDrivers(d);
       if (Array.isArray(v)) setVehicles(v);
       if (Array.isArray(p)) setPlaces(p);
       if (Array.isArray(rv)) setRentedVehicles(rv);
+      if (Array.isArray(fr)) setFuelRates(fr);
     });
   };
 
@@ -171,6 +174,17 @@ export default function FuelForm({ id }) {
     ? (distance / Number(form.fuel_qty)).toFixed(2) : '';
 
   const isRented = rentedVehicles.some(rv => rv.number.toLowerCase() === form.truck_no.trim().toLowerCase());
+
+  // Auto-fill fuel rate from master data when rented vehicle is selected
+  useEffect(() => {
+    if (isRented && fuelRates.length > 0 && !form.fuel_rate) {
+      setForm(prev => ({ ...prev, fuel_rate: String(fuelRates[0].rate) }));
+    }
+    if (!isRented && form.fuel_rate) {
+      setForm(prev => ({ ...prev, fuel_rate: '' }));
+    }
+  }, [isRented, fuelRates]); // eslint-disable-line
+
   const totalFuelCost = isRented && Number(form.fuel_qty) > 0 && Number(form.fuel_rate) > 0
     ? (Number(form.fuel_qty) * Number(form.fuel_rate)).toFixed(2) : '';
 
