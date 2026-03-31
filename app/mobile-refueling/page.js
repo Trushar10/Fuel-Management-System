@@ -173,7 +173,10 @@ export default function MRUPage() {
       const res = await fetch('/api/mru-entries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          tank_balance: String(Math.round(((Number(form.tank_balance) || 0) - (Number(form.delivered_fuel) || 0)) * 100) / 100),
+        }),
       });
       const data = await res.json();
       if (!res.ok) { showToast(data.error || 'Failed', 'error'); return; }
