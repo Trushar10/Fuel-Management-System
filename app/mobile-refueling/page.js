@@ -100,10 +100,8 @@ export default function MRUPage() {
 
   const [driverLocked, setDriverLocked] = useState(false);
   const [vehicleLocked, setVehicleLocked] = useState(false);
-  const [mruLocked, setMruLocked] = useState(false);
   const [driverSearch, setDriverSearch] = useState('');
   const [vehicleSearch, setVehicleSearch] = useState('');
-  const [mruSearch, setMruSearch] = useState('');
 
   const showToast = (msg, type = 'success') => {
     const id = Date.now();
@@ -140,16 +138,15 @@ export default function MRUPage() {
     }
   }, [residualFuel]);
 
-  // Auto-calculate tank_balance & delivered_fuel
+  // Auto-calculate tank_balance = balance_stock + filled_qty
   useEffect(() => {
     const stock = Number(form.balance_stock) || 0;
     const qty = Number(form.qty) || 0;
     if (stock > 0 && qty > 0) {
-      const tankBalance = Math.max(0, stock - qty);
+      const tankBalance = stock + qty;
       setForm(prev => ({
         ...prev,
         tank_balance: String(Math.round(tankBalance * 100) / 100),
-        delivered_fuel: String(Math.round(qty * 100) / 100),
       }));
     }
   }, [form.balance_stock, form.qty]);
@@ -161,8 +158,8 @@ export default function MRUPage() {
       ...emptyForm,
       balance_stock: residualFuel.length > 0 ? String(residualFuel[0].opening_balance) : '',
     });
-    setDriverSearch(''); setVehicleSearch(''); setMruSearch('');
-    setDriverLocked(false); setVehicleLocked(false); setMruLocked(false);
+    setDriverSearch(''); setVehicleSearch('');
+    setDriverLocked(false); setVehicleLocked(false);
   };
 
   const handleSubmit = async (e) => {
@@ -199,10 +196,7 @@ export default function MRUPage() {
     ? vehicles.filter(v => v.number.toLowerCase().includes(vehicleSearch.toLowerCase()))
         .map(v => ({ label: `${v.number} — ${v.brand}`, value: v }))
     : [];
-  const mruSuggestions = mruSearch && !mruLocked
-    ? mruPlaces.filter(p => p.name.toLowerCase().includes(mruSearch.toLowerCase()))
-        .map(p => ({ label: p.name, value: p }))
-    : [];
+
 
   return (
     <>
@@ -238,17 +232,13 @@ export default function MRUPage() {
                     <label>Date</label>
                     <input type="date" name="date" value={form.date} onChange={handleChange} required className="fc-input" />
                   </div>
-                  <AutocompleteField
-                    label="MRU Name" value={mruSearch} placeholder="Select Mobile Refueling Unit" required
-                    readOnly={mruLocked}
-                    onChange={val => { setMruSearch(val); setForm({ ...form, mru_name: val }); }}
-                    suggestions={mruSuggestions}
-                    onSelect={s => {
-                      if (s === null) { setMruSearch(''); setMruLocked(false); setForm({ ...form, mru_name: '' }); return; }
-                      setMruSearch(s.value.name); setMruLocked(true);
-                      setForm({ ...form, mru_name: s.value.name });
-                    }}
-                  />
+                  <div className="form-group">
+                    <label>MRU Name</label>
+                    <select name="mru_name" value={form.mru_name} onChange={handleChange} required className="fc-input">
+                      <option value="">Select Mobile Refueling Unit</option>
+                      {mruPlaces.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+                    </select>
+                  </div>
                   <AutocompleteField
                     label="Truck No." value={vehicleSearch} placeholder="e.g. GJ-05-AB-1234" required
                     readOnly={vehicleLocked}
@@ -301,13 +291,14 @@ export default function MRUPage() {
                   <div className="form-group">
                     <label>Balance Stock (L)</label>
                     <div className="input-unit">
-                      <input type="number" name="balance_stock" value={form.balance_stock} onChange={handleChange}
-                        placeholder="0" step="0.01" required className="fc-input" />
+                      <input type="number" name="balance_stock" value={form.balance_stock} readOnly
+                        placeholder="0" step="0.01" required className="fc-input"
+                        style={{ background: 'var(--surface)', cursor: 'not-allowed', color: 'var(--muted)' }} />
                       <span className="unit-label">L</span>
                     </div>
                   </div>
                   <div className="form-group">
-                    <label>Qty (Litres)</label>
+                    <label>Filled QTY (Litres)</label>
                     <div className="input-unit">
                       <input type="number" name="qty" value={form.qty} onChange={handleChange}
                         placeholder="0" step="0.01" required className="fc-input" />
@@ -323,10 +314,10 @@ export default function MRUPage() {
                     </div>
                   </div>
                   <div className="form-group">
-                    <label>Delivered Fuel (auto)</label>
+                    <label>Delivered Fuel</label>
                     <div className="input-unit">
-                      <input type="number" name="delivered_fuel" value={form.delivered_fuel} readOnly className="fc-input"
-                        style={{ background: 'var(--surface)', cursor: 'not-allowed', color: 'var(--muted)' }} />
+                      <input type="number" name="delivered_fuel" value={form.delivered_fuel} onChange={handleChange}
+                        placeholder="0" step="0.01" required className="fc-input" />
                       <span className="unit-label">L</span>
                     </div>
                   </div>
@@ -375,7 +366,7 @@ export default function MRUPage() {
                         <th>VEHICLE</th>
                         <th>DRIVER</th>
                         <th style={{ textAlign: 'right' }}>STOCK</th>
-                        <th style={{ textAlign: 'right' }}>QTY (L)</th>
+                        <th style={{ textAlign: 'right' }}>FILLED QTY (L)</th>
                         <th style={{ textAlign: 'right' }}>BALANCE</th>
                         <th style={{ textAlign: 'right' }}>DELIVERED</th>
                       </tr>
