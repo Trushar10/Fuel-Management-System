@@ -256,17 +256,19 @@ export default function MasterDataPage() {
   const [fuelRates, setFuelRates] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [residualFuel, setResidualFuel] = useState([]);
+  const [rentedVehicles, setRentedVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
-    const [d, v, p, fr, c, rf] = await Promise.all([
+    const [d, v, p, fr, c, rf, rv] = await Promise.all([
       fetch('/api/drivers').then(r => r.json()),
       fetch('/api/vehicles').then(r => r.json()),
       fetch('/api/filling-places').then(r => r.json()),
       fetch('/api/fuel-rates').then(r => r.json()),
       fetch('/api/companies').then(r => r.json()),
       fetch('/api/residual-fuel').then(r => r.json()),
+      fetch('/api/rented-vehicles').then(r => r.json()),
     ]);
     if (Array.isArray(d)) setDrivers(d);
     if (Array.isArray(v)) setVehicles(v);
@@ -274,6 +276,7 @@ export default function MasterDataPage() {
     if (Array.isArray(fr)) setFuelRates(fr);
     if (Array.isArray(c)) setCompanies(c);
     if (Array.isArray(rf)) setResidualFuel(rf);
+    if (Array.isArray(rv)) setRentedVehicles(rv);
     setLoading(false);
   }, []);
 
@@ -333,6 +336,13 @@ export default function MasterDataPage() {
               fields={[
                 { name: 'date', placeholder: 'Date', bold: true, type: 'date', defaultValue: new Date().toISOString().split('T')[0], format: d => { if (!d) return ''; const [y,m,dd] = d.split('-'); return `${dd}/${m}/${y}`; } },
                 { name: 'rate', placeholder: 'Rate per litre' },
+              ]}
+            />
+            <MasterSection
+              title="Rented Vehicles" icon="🔑" items={rentedVehicles} apiUrl="/api/rented-vehicles" onReload={loadAll}
+              fields={[
+                { name: 'number', placeholder: 'e.g. GJ-30-HJ-0728', bold: true, transform: formatVehicleNumber },
+                { name: 'company', placeholder: 'Company name', suggestions: companies.map(c => c.name), transform: titleCase },
               ]}
             />
             <MasterSection
