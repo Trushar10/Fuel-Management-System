@@ -184,7 +184,8 @@ export default function FuelForm({ id }) {
 
   const handleSubmit = async e => {
     e.preventDefault();
-    if (!vehicles.some(v => v.number.toLowerCase() === form.truck_no.trim().toLowerCase())) { showToast('Truck No. must be selected from master data', 'error'); return; }
+    const allVehicles = [...vehicles.map(v => v.number.toLowerCase()), ...rentedVehicles.map(rv => rv.number.toLowerCase())];
+    if (!allVehicles.includes(form.truck_no.trim().toLowerCase())) { showToast('Truck No. must be selected from master data', 'error'); return; }
     if (!drivers.some(d => d.name.toLowerCase() === form.driver_name.trim().toLowerCase())) { showToast('Driver Name must be selected from master data', 'error'); return; }
     if (!places.some(p => p.name.toLowerCase() === form.filling_place.trim().toLowerCase())) { showToast('Place of Filling must be selected from master data', 'error'); return; }
     setLoading(true); setError(''); setSuccess('');
@@ -205,8 +206,12 @@ export default function FuelForm({ id }) {
         .map(d => ({ label: `${d.name} — ${d.phone}`, value: d }))
     : [];
   const vehicleSuggestions = vehicleSearch && !vehicleLocked
-    ? vehicles.filter(v => v.number.toLowerCase().includes(vehicleSearch.toLowerCase()))
-        .map(v => ({ label: `${v.number} — ${v.brand}`, value: v }))
+    ? [
+        ...vehicles.filter(v => v.number.toLowerCase().includes(vehicleSearch.toLowerCase()))
+          .map(v => ({ label: `${v.number} — ${v.brand}`, value: v })),
+        ...rentedVehicles.filter(rv => rv.number.toLowerCase().includes(vehicleSearch.toLowerCase()) && !vehicles.some(v => v.number.toLowerCase() === rv.number.toLowerCase()))
+          .map(rv => ({ label: `${rv.number} — Rented (${rv.company})`, value: rv })),
+      ]
     : [];
   const placeSuggestions = placeSearch && !placeLocked
     ? places.filter(p => p.name.toLowerCase().includes(placeSearch.toLowerCase()))
