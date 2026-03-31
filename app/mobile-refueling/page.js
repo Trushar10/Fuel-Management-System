@@ -199,6 +199,10 @@ export default function MRUPage() {
     ? vehicles.filter(v => v.number.toLowerCase().includes(vehicleSearch.toLowerCase()))
         .map(v => ({ label: `${v.number} — ${v.brand}`, value: v }))
     : [];
+  const mruSuggestions = mruSearch && !mruLocked
+    ? mruPlaces.filter(p => p.name.toLowerCase().includes(mruSearch.toLowerCase()))
+        .map(p => ({ label: p.name, value: p }))
+    : [];
 
   return (
     <>
