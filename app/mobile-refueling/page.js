@@ -83,6 +83,7 @@ function AutocompleteField({ label, value, onChange, onSelect, suggestions, plac
 const emptyForm = {
   date: new Date().toISOString().split('T')[0],
   truck_no: '', driver_phone: '', driver_name: '',
+  mru_name: '',
   balance_stock: '', qty: '', tank_balance: '', delivered_fuel: '',
 };
 
@@ -95,11 +96,14 @@ export default function MRUPage() {
   const [drivers, setDrivers] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [residualFuel, setResidualFuel] = useState([]);
+  const [mruPlaces, setMruPlaces] = useState([]);
 
   const [driverLocked, setDriverLocked] = useState(false);
   const [vehicleLocked, setVehicleLocked] = useState(false);
+  const [mruLocked, setMruLocked] = useState(false);
   const [driverSearch, setDriverSearch] = useState('');
   const [vehicleSearch, setVehicleSearch] = useState('');
+  const [mruSearch, setMruSearch] = useState('');
 
   const showToast = (msg, type = 'success') => {
     const id = Date.now();
@@ -118,10 +122,12 @@ export default function MRUPage() {
       fetch('/api/drivers').then(r => r.json()),
       fetch('/api/vehicles').then(r => r.json()),
       fetch('/api/residual-fuel').then(r => r.json()),
-    ]).then(([d, v, rf]) => {
+      fetch('/api/filling-places').then(r => r.json()),
+    ]).then(([d, v, rf, fp]) => {
       if (Array.isArray(d)) setDrivers(d);
       if (Array.isArray(v)) setVehicles(v);
       if (Array.isArray(rf)) setResidualFuel(rf);
+      if (Array.isArray(fp)) setMruPlaces(fp.filter(p => p.is_mru));
     });
   };
 
@@ -155,8 +161,8 @@ export default function MRUPage() {
       ...emptyForm,
       balance_stock: residualFuel.length > 0 ? String(residualFuel[0].opening_balance) : '',
     });
-    setDriverSearch(''); setVehicleSearch('');
-    setDriverLocked(false); setVehicleLocked(false);
+    setDriverSearch(''); setVehicleSearch(''); setMruSearch('');
+    setDriverLocked(false); setVehicleLocked(false); setMruLocked(false);
   };
 
   const handleSubmit = async (e) => {
@@ -228,6 +234,17 @@ export default function MRUPage() {
                     <label>Date</label>
                     <input type="date" name="date" value={form.date} onChange={handleChange} required className="fc-input" />
                   </div>
+                  <AutocompleteField
+                    label="MRU Name" value={mruSearch} placeholder="Select Mobile Refueling Unit" required
+                    readOnly={mruLocked}
+                    onChange={val => { setMruSearch(val); setForm({ ...form, mru_name: val }); }}
+                    suggestions={mruSuggestions}
+                    onSelect={s => {
+                      if (s === null) { setMruSearch(''); setMruLocked(false); setForm({ ...form, mru_name: '' }); return; }
+                      setMruSearch(s.value.name); setMruLocked(true);
+                      setForm({ ...form, mru_name: s.value.name });
+                    }}
+                  />
                   <AutocompleteField
                     label="Truck No." value={vehicleSearch} placeholder="e.g. GJ-05-AB-1234" required
                     readOnly={vehicleLocked}
