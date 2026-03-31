@@ -142,16 +142,14 @@ export default function MRUPage() {
   useEffect(() => {
     const stock = Number(form.balance_stock) || 0;
     const qty = Number(form.qty) || 0;
-    if (stock > 0 && qty > 0) {
-      const tankBalance = stock + qty;
-      setForm(prev => ({
-        ...prev,
-        tank_balance: String(Math.round(tankBalance * 100) / 100),
-      }));
-    }
+    const tankBalance = stock + qty;
+    setForm(prev => ({
+      ...prev,
+      tank_balance: tankBalance > 0 ? String(Math.round(tankBalance * 100) / 100) : '',
+    }));
   }, [form.balance_stock, form.qty]);
 
-  const handleChange = e => { setForm({ ...form, [e.target.name]: e.target.value }); };
+  const handleChange = e => { setForm(prev => ({ ...prev, [e.target.name]: e.target.value })); };
 
   const resetForm = () => {
     setForm({
@@ -336,7 +334,7 @@ export default function MRUPage() {
                     </div>
                     <div>
                       <div className="cost-preview-label">Remaining</div>
-                      <div className="cost-preview-value">{form.tank_balance ? `${form.tank_balance} L` : '—'}</div>
+                      <div className="cost-preview-value">{(Number(form.tank_balance) || 0) - (Number(form.delivered_fuel) || 0) > 0 ? `${Math.round(((Number(form.tank_balance) || 0) - (Number(form.delivered_fuel) || 0)) * 100) / 100} L` : '—'}</div>
                     </div>
                   </div>
                 </div>
