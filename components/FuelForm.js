@@ -20,6 +20,7 @@ const empty = {
   date: new Date().toISOString().split('T')[0],
   truck_no: '', driver_phone: '', driver_name: '',
   start_km: '', fuel_qty: '', end_km: '', filling_place: '',
+  fuel_rate: '',
 };
 
 /* ── Autocomplete dropdown component ────────────────────────── */
@@ -112,6 +113,7 @@ export default function FuelForm({ id }) {
   const [drivers, setDrivers] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [places, setPlaces] = useState([]);
+  const [rentedVehicles, setRentedVehicles] = useState([]);
 
   const [driverLocked, setDriverLocked] = useState(false);
   const [vehicleLocked, setVehicleLocked] = useState(false);
@@ -132,10 +134,12 @@ export default function FuelForm({ id }) {
       fetch('/api/drivers').then(r => r.json()),
       fetch('/api/vehicles').then(r => r.json()),
       fetch('/api/filling-places').then(r => r.json()),
-    ]).then(([d, v, p]) => {
+      fetch('/api/rented-vehicles').then(r => r.json()),
+    ]).then(([d, v, p, rv]) => {
       if (Array.isArray(d)) setDrivers(d);
       if (Array.isArray(v)) setVehicles(v);
       if (Array.isArray(p)) setPlaces(p);
+      if (Array.isArray(rv)) setRentedVehicles(rv);
     });
   };
 
@@ -151,6 +155,7 @@ export default function FuelForm({ id }) {
             date: data.date, truck_no: data.truck_no, driver_phone: data.driver_phone,
             driver_name: data.driver_name, start_km: data.start_km, fuel_qty: data.fuel_qty,
             end_km: data.end_km, filling_place: data.filling_place,
+            fuel_rate: data.fuel_rate || '',
           });
           setDriverSearch(data.driver_name);
           setVehicleSearch(data.truck_no);
@@ -164,6 +169,10 @@ export default function FuelForm({ id }) {
     ? Math.max(0, Number(form.end_km) - Number(form.start_km)) : '';
   const mileage = distance !== '' && Number(form.fuel_qty) > 0
     ? (distance / Number(form.fuel_qty)).toFixed(2) : '';
+
+  const isRented = rentedVehicles.some(rv => rv.number.toLowerCase() === form.truck_no.trim().toLowerCase());
+  const totalFuelCost = isRented && Number(form.fuel_qty) > 0 && Number(form.fuel_rate) > 0
+    ? (Number(form.fuel_qty) * Number(form.fuel_rate)).toFixed(2) : '';
 
   const handleChange = e => { setForm({ ...form, [e.target.name]: e.target.value }); setError(''); setSuccess(''); };
 
@@ -297,6 +306,23 @@ export default function FuelForm({ id }) {
                   <span className="unit-label">L</span>
                 </div>
               </div>
+              {isRented && (
+                <>
+                  <div className="form-group">
+                    <label>Fuel Rate (₹/L)</label>
+                    <div className="input-unit">
+                      <input type="number" name="fuel_rate" value={form.fuel_rate} onChange={handleChange}
+                        placeholder="0" step="0.01" className="fc-input" />
+                      <span className="unit-label">₹</span>
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label>Total Fuel Cost (auto)</label>
+                    <input type="text" readOnly value={totalFuelCost ? `₹ ${Number(totalFuelCost).toLocaleString()}` : '—'} className="fc-input"
+                      style={{ background: 'var(--surface)', cursor: 'not-allowed', color: 'var(--muted)' }} />
+                  </div>
+                </>
+              )}
             </div>
           </div>
 

@@ -33,7 +33,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { date, truck_no, driver_phone, driver_name, start_km, fuel_qty, end_km, filling_place } = body;
+    const { date, truck_no, driver_phone, driver_name, start_km, fuel_qty, end_km, filling_place, fuel_rate } = body;
 
     if (!date || !truck_no || !driver_phone || !driver_name || start_km == null || fuel_qty == null || end_km == null || !filling_place) {
       return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
@@ -46,11 +46,13 @@ export async function POST(request) {
     }
 
     const db = await getDb();
+    const fRate = Number(fuel_rate) || 0;
+    const totalCost = fRate > 0 ? Number(fuel_qty) * fRate : 0;
     const result = await db.execute({
-      sql: `INSERT INTO fuel_entries (date, truck_no, driver_phone, driver_name, start_km, fuel_qty, end_km, filling_place)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      sql: `INSERT INTO fuel_entries (date, truck_no, driver_phone, driver_name, start_km, fuel_qty, end_km, filling_place, fuel_rate, total_fuel_cost)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [date, truck_no.trim(), driver_phone.trim(), driver_name.trim(),
-             Number(start_km), Number(fuel_qty), Number(end_km), filling_place.trim()],
+             Number(start_km), Number(fuel_qty), Number(end_km), filling_place.trim(), fRate, Math.round(totalCost * 100) / 100],
     });
 
     const row = await db.execute({ sql: 'SELECT * FROM fuel_entries WHERE id = ?', args: [result.lastInsertRowid] });
