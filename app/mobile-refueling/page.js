@@ -131,12 +131,14 @@ export default function MRUPage() {
 
   useEffect(() => { loadRecent(); loadMasters(); }, []);
 
-  // Auto-set balance_stock from latest residual fuel entry
+  // Auto-set balance_stock from latest MRU entry's remaining, or fallback to residual fuel
   useEffect(() => {
-    if (residualFuel.length > 0) {
+    if (recentEntries.length > 0) {
+      setForm(prev => prev.balance_stock ? prev : { ...prev, balance_stock: String(recentEntries[0].tank_balance) });
+    } else if (residualFuel.length > 0) {
       setForm(prev => prev.balance_stock ? prev : { ...prev, balance_stock: String(residualFuel[0].opening_balance) });
     }
-  }, [residualFuel]);
+  }, [recentEntries, residualFuel]);
 
   // Auto-calculate tank_balance = balance_stock + filled_qty
   useEffect(() => {
