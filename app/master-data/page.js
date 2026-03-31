@@ -59,8 +59,9 @@ function MasterSection({ title, icon, items, fields, apiUrl, onReload }) {
   const cancel = () => { setAdding(false); setEditId(null); setFocusedField(null); };
 
   const handleSave = async () => {
-    // Validate all fields required
-    const emptyField = fields.find(f => f.type !== 'checkbox' && (!form[f.name] || !String(form[f.name]).trim()));
+    // Validate all fields required (skip checkbox, select, and conditionally hidden fields)
+    const visibleFields = fields.filter(f => f.type !== 'checkbox' && f.type !== 'select' && (!f.showWhen || form[f.showWhen]));
+    const emptyField = visibleFields.find(f => !form[f.name] || !String(form[f.name]).trim());
     if (emptyField) { showToast(`${emptyField.placeholder} is required`, 'error'); return; }
     // Validate phone fields (10 digits)
     const phoneField = fields.find(f => f.inputMode === 'numeric');
@@ -108,13 +109,21 @@ function MasterSection({ title, icon, items, fields, apiUrl, onReload }) {
         {adding && (
           <div className="master-item" style={{ background: 'rgba(245,166,35,0.05)' }}>
             <div style={{ display: 'flex', gap: 8, flex: 1 }}>
-              {fields.map(f => (
+              {fields.map(f => {
+                if (f.showWhen && !form[f.showWhen]) return null;
+                return (
                 <div key={f.name} style={{ flex: f.type === 'checkbox' ? 'none' : 1, position: 'relative', display: 'flex', alignItems: f.type === 'checkbox' ? 'center' : undefined, gap: f.type === 'checkbox' ? 4 : undefined }}>
                   {f.type === 'checkbox' ? (
                     <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--muted)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                       <input type="checkbox" checked={!!form[f.name]} onChange={e => setForm({ ...form, [f.name]: e.target.checked ? 1 : 0 })} />
                       {f.placeholder}
                     </label>
+                  ) : f.type === 'select' ? (
+                    <select value={form[f.name] || ''} onChange={e => setForm({ ...form, [f.name]: e.target.value })}
+                      className="fc-input" style={{ width: '100%', padding: '6px 10px', fontSize: 12 }}>
+                      <option value="">{f.placeholder}</option>
+                      {(f.options || []).map(o => <option key={o} value={o}>{o}</option>)}
+                    </select>
                   ) : (
                     <>
                       <input type={f.type || 'text'} placeholder={f.placeholder} value={form[f.name] || ''}
@@ -143,7 +152,7 @@ function MasterSection({ title, icon, items, fields, apiUrl, onReload }) {
                     </>
                   )}
                 </div>
-              ))}
+              );})}
             </div>
             <div className="master-actions">
               <button onClick={handleSave} disabled={saving} className="icon-btn" style={{ color: 'var(--green)' }}>✓</button>
@@ -161,13 +170,21 @@ function MasterSection({ title, icon, items, fields, apiUrl, onReload }) {
             {editId === item.id ? (
               <>
                 <div style={{ display: 'flex', gap: 8, flex: 1 }}>
-                  {fields.map(f => (
+                  {fields.map(f => {
+                    if (f.showWhen && !form[f.showWhen]) return null;
+                    return (
                     <div key={f.name} style={{ flex: f.type === 'checkbox' ? 'none' : 1, position: 'relative', display: 'flex', alignItems: f.type === 'checkbox' ? 'center' : undefined, gap: f.type === 'checkbox' ? 4 : undefined }}>
                       {f.type === 'checkbox' ? (
                         <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--muted)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                           <input type="checkbox" checked={!!form[f.name]} onChange={e => setForm({ ...form, [f.name]: e.target.checked ? 1 : 0 })} />
                           {f.placeholder}
                         </label>
+                      ) : f.type === 'select' ? (
+                        <select value={form[f.name] || ''} onChange={e => setForm({ ...form, [f.name]: e.target.value })}
+                          className="fc-input" style={{ width: '100%', padding: '6px 10px', fontSize: 12 }}>
+                          <option value="">{f.placeholder}</option>
+                          {(f.options || []).map(o => <option key={o} value={o}>{o}</option>)}
+                        </select>
                       ) : (
                         <>
                           <input type={f.type || 'text'} value={form[f.name] || ''}
@@ -197,7 +214,7 @@ function MasterSection({ title, icon, items, fields, apiUrl, onReload }) {
                         </>
                       )}
                     </div>
-                  ))}
+                  );})}
                 </div>
                 <div className="master-actions">
                   <button onClick={handleSave} disabled={saving} className="icon-btn" style={{ color: 'var(--green)' }}>✓</button>
@@ -214,7 +231,7 @@ function MasterSection({ title, icon, items, fields, apiUrl, onReload }) {
                     )}
                   </div>
                   <div className="master-item-sub">
-                    {fields.filter(f => !f.bold && f.type !== 'checkbox').map(f => f.format ? f.format(item[f.name]) : item[f.name]).filter(Boolean).join(' • ')}
+                    {fields.filter(f => !f.bold && f.type !== 'checkbox' && (!f.showWhen || item[f.showWhen])).map(f => f.format ? f.format(item[f.name]) : item[f.name]).filter(Boolean).join(' • ')}
                   </div>
                 </div>
                 <div className="master-actions">
@@ -301,6 +318,7 @@ export default function MasterDataPage() {
               fields={[
                 { name: 'name', placeholder: 'Place name', bold: true, transform: titleCase },
                 { name: 'is_mru', placeholder: 'Mobile Refueling Unit', type: 'checkbox' },
+                { name: 'associate_vehicle', placeholder: 'Associate Vehicle', type: 'select', options: vehicles.map(v => v.number), showWhen: 'is_mru' },
               ]}
             />
             <MasterSection
