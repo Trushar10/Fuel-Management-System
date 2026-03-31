@@ -131,14 +131,14 @@ export default function MRUPage() {
 
   useEffect(() => { loadRecent(); loadMasters(); }, []);
 
-  // Auto-set balance_stock from latest MRU entry's remaining, or fallback to residual fuel
-  useEffect(() => {
-    if (recentEntries.length > 0) {
-      setForm(prev => prev.balance_stock ? prev : { ...prev, balance_stock: String(recentEntries[0].tank_balance) });
-    } else if (residualFuel.length > 0) {
-      setForm(prev => prev.balance_stock ? prev : { ...prev, balance_stock: String(residualFuel[0].opening_balance) });
-    }
-  }, [recentEntries, residualFuel]);
+  // Helper: get balance stock for a specific MRU name
+  const getBalanceForMru = (mruName) => {
+    const lastEntry = recentEntries.find(e => e.mru_name === mruName);
+    if (lastEntry) return String(lastEntry.tank_balance);
+    const rf = residualFuel.find(r => r.filling_place === mruName);
+    if (rf) return String(rf.opening_balance);
+    return '';
+  };
 
   // Auto-calculate tank_balance = balance_stock + filled_qty
   useEffect(() => {
@@ -185,8 +185,11 @@ export default function MRUPage() {
       showToast('MRU entry saved successfully!', 'success');
       // After saving, update balance stock for next entry (remaining = tank_balance - delivered_fuel)
       const remaining = String(Math.round(((Number(form.tank_balance) || 0) - (Number(form.delivered_fuel) || 0)) * 100) / 100);
+      const savedMru = form.mru_name;
+      const savedVehicle = form.truck_no;
       resetForm();
-      setForm(prev => ({ ...prev, balance_stock: remaining }));
+      setForm(prev => ({ ...prev, mru_name: savedMru, truck_no: savedVehicle, balance_stock: remaining }));
+      if (savedVehicle) { setVehicleSearch(savedVehicle); setVehicleLocked(true); }
       loadRecent();
     } finally { setLoading(false); }
   };
@@ -241,8 +244,10 @@ export default function MRUPage() {
                       const name = e.target.value;
                       const place = mruPlaces.find(p => p.name === name);
                       const vehicle = place?.associate_vehicle || '';
-                      setForm(prev => ({ ...prev, mru_name: name, truck_no: vehicle || prev.truck_no }));
+                      const stock = name ? getBalanceForMru(name) : '';
+                      setForm(prev => ({ ...prev, mru_name: name, truck_no: vehicle || prev.truck_no, balance_stock: stock, qty: '', tank_balance: '', delivered_fuel: '' }));
                       if (vehicle) { setVehicleSearch(vehicle); setVehicleLocked(true); }
+                      else { setVehicleSearch(''); setVehicleLocked(false); }
                     }} required className="fc-input">
                       <option value="">Select Mobile Refueling Unit</option>
                       {mruPlaces.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
