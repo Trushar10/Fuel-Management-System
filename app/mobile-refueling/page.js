@@ -178,10 +178,10 @@ export default function MRUPage() {
       const data = await res.json();
       if (!res.ok) { showToast(data.error || 'Failed', 'error'); return; }
       showToast('MRU entry saved successfully!', 'success');
-      // After saving, update balance stock for next entry (tank_balance becomes new stock)
-      const newStock = form.tank_balance;
+      // After saving, update balance stock for next entry (remaining = tank_balance - delivered_fuel)
+      const remaining = String(Math.round(((Number(form.tank_balance) || 0) - (Number(form.delivered_fuel) || 0)) * 100) / 100);
       resetForm();
-      setForm(prev => ({ ...prev, balance_stock: newStock }));
+      setForm(prev => ({ ...prev, balance_stock: remaining }));
       loadRecent();
     } finally { setLoading(false); }
   };
