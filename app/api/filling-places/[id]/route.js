@@ -7,7 +7,7 @@ export async function PUT(request, { params }) {
     const id = parseInt(rawId, 10);
     if (isNaN(id)) return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
 
-    const { name } = await request.json();
+    const { name, is_mru } = await request.json();
     if (!name) return NextResponse.json({ error: 'Place name is required' }, { status: 400 });
 
     const db = await getDb();
@@ -15,7 +15,7 @@ export async function PUT(request, { params }) {
     if (old.rows.length === 0) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
     const oldRow = old.rows[0];
-    await db.execute({ sql: 'UPDATE filling_places SET name = ? WHERE id = ?', args: [name.trim(), id] });
+    await db.execute({ sql: 'UPDATE filling_places SET name = ?, is_mru = ? WHERE id = ?', args: [name.trim(), is_mru ? 1 : 0, id] });
 
     // Cascade update to all fuel entries with this filling place
     await db.execute({

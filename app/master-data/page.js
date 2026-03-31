@@ -60,7 +60,7 @@ function MasterSection({ title, icon, items, fields, apiUrl, onReload }) {
 
   const handleSave = async () => {
     // Validate all fields required
-    const emptyField = fields.find(f => !form[f.name] || !String(form[f.name]).trim());
+    const emptyField = fields.find(f => f.type !== 'checkbox' && (!form[f.name] || !String(form[f.name]).trim()));
     if (emptyField) { showToast(`${emptyField.placeholder} is required`, 'error'); return; }
     // Validate phone fields (10 digits)
     const phoneField = fields.find(f => f.inputMode === 'numeric');
@@ -109,30 +109,39 @@ function MasterSection({ title, icon, items, fields, apiUrl, onReload }) {
           <div className="master-item" style={{ background: 'rgba(245,166,35,0.05)' }}>
             <div style={{ display: 'flex', gap: 8, flex: 1 }}>
               {fields.map(f => (
-                <div key={f.name} style={{ flex: 1, position: 'relative' }}>
-                  <input type={f.type || 'text'} placeholder={f.placeholder} value={form[f.name] || ''}
-                    inputMode={f.inputMode || undefined}
-                    maxLength={f.maxLength || undefined}
-                    required
-                    onFocus={() => f.suggestions && setFocusedField(f.name)}
-                    onBlur={() => setTimeout(() => setFocusedField(null), 150)}
-                    onChange={e => {
-                      let val = e.target.value;
-                      if (f.transform) val = f.transform(val);
-                      setForm({ ...form, [f.name]: val });
-                      if (f.suggestions) setFocusedField(f.name);
-                    }}
-                    className="fc-input" style={{ width: '100%', padding: '6px 10px', fontSize: 12 }} />
-                  {f.suggestions && focusedField === f.name && (() => {
-                    const filtered = f.suggestions.filter(s => s.toLowerCase().includes((form[f.name] || '').toLowerCase()));
-                    return filtered.length > 0 ? (
-                      <div className="autocomplete-list" ref={suggestRef}>
-                        {filtered.map(s => (
-                          <div key={s} className="autocomplete-item" onMouseDown={() => { setForm({ ...form, [f.name]: s }); setFocusedField(null); }}>{s}</div>
-                        ))}
-                      </div>
-                    ) : null;
-                  })()}
+                <div key={f.name} style={{ flex: f.type === 'checkbox' ? 'none' : 1, position: 'relative', display: 'flex', alignItems: f.type === 'checkbox' ? 'center' : undefined, gap: f.type === 'checkbox' ? 4 : undefined }}>
+                  {f.type === 'checkbox' ? (
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--muted)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                      <input type="checkbox" checked={!!form[f.name]} onChange={e => setForm({ ...form, [f.name]: e.target.checked ? 1 : 0 })} />
+                      {f.placeholder}
+                    </label>
+                  ) : (
+                    <>
+                      <input type={f.type || 'text'} placeholder={f.placeholder} value={form[f.name] || ''}
+                        inputMode={f.inputMode || undefined}
+                        maxLength={f.maxLength || undefined}
+                        required
+                        onFocus={() => f.suggestions && setFocusedField(f.name)}
+                        onBlur={() => setTimeout(() => setFocusedField(null), 150)}
+                        onChange={e => {
+                          let val = e.target.value;
+                          if (f.transform) val = f.transform(val);
+                          setForm({ ...form, [f.name]: val });
+                          if (f.suggestions) setFocusedField(f.name);
+                        }}
+                        className="fc-input" style={{ width: '100%', padding: '6px 10px', fontSize: 12 }} />
+                      {f.suggestions && focusedField === f.name && (() => {
+                        const filtered = f.suggestions.filter(s => s.toLowerCase().includes((form[f.name] || '').toLowerCase()));
+                        return filtered.length > 0 ? (
+                          <div className="autocomplete-list" ref={suggestRef}>
+                            {filtered.map(s => (
+                              <div key={s} className="autocomplete-item" onMouseDown={() => { setForm({ ...form, [f.name]: s }); setFocusedField(null); }}>{s}</div>
+                            ))}
+                          </div>
+                        ) : null;
+                      })()}
+                    </>
+                  )}
                 </div>
               ))}
             </div>
@@ -153,31 +162,40 @@ function MasterSection({ title, icon, items, fields, apiUrl, onReload }) {
               <>
                 <div style={{ display: 'flex', gap: 8, flex: 1 }}>
                   {fields.map(f => (
-                    <div key={f.name} style={{ flex: 1, position: 'relative' }}>
-                      <input type={f.type || 'text'} value={form[f.name] || ''}
-                        inputMode={f.inputMode || undefined}
-                        maxLength={f.maxLength || undefined}
-                        required
-                        placeholder={f.placeholder}
-                        onFocus={() => f.suggestions && setFocusedField(f.name)}
-                        onBlur={() => setTimeout(() => setFocusedField(null), 150)}
-                        onChange={e => {
-                          let val = e.target.value;
-                          if (f.transform) val = f.transform(val);
-                          setForm({ ...form, [f.name]: val });
-                          if (f.suggestions) setFocusedField(f.name);
-                        }}
-                        className="fc-input" style={{ width: '100%', padding: '6px 10px', fontSize: 12 }} />
-                      {f.suggestions && focusedField === f.name && (() => {
-                        const filtered = f.suggestions.filter(s => s.toLowerCase().includes((form[f.name] || '').toLowerCase()));
-                        return filtered.length > 0 ? (
-                          <div className="autocomplete-list" ref={suggestRef}>
-                            {filtered.map(s => (
-                              <div key={s} className="autocomplete-item" onMouseDown={() => { setForm({ ...form, [f.name]: s }); setFocusedField(null); }}>{s}</div>
-                            ))}
-                          </div>
-                        ) : null;
-                      })()}
+                    <div key={f.name} style={{ flex: f.type === 'checkbox' ? 'none' : 1, position: 'relative', display: 'flex', alignItems: f.type === 'checkbox' ? 'center' : undefined, gap: f.type === 'checkbox' ? 4 : undefined }}>
+                      {f.type === 'checkbox' ? (
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--muted)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                          <input type="checkbox" checked={!!form[f.name]} onChange={e => setForm({ ...form, [f.name]: e.target.checked ? 1 : 0 })} />
+                          {f.placeholder}
+                        </label>
+                      ) : (
+                        <>
+                          <input type={f.type || 'text'} value={form[f.name] || ''}
+                            inputMode={f.inputMode || undefined}
+                            maxLength={f.maxLength || undefined}
+                            required
+                            placeholder={f.placeholder}
+                            onFocus={() => f.suggestions && setFocusedField(f.name)}
+                            onBlur={() => setTimeout(() => setFocusedField(null), 150)}
+                            onChange={e => {
+                              let val = e.target.value;
+                              if (f.transform) val = f.transform(val);
+                              setForm({ ...form, [f.name]: val });
+                              if (f.suggestions) setFocusedField(f.name);
+                            }}
+                            className="fc-input" style={{ width: '100%', padding: '6px 10px', fontSize: 12 }} />
+                          {f.suggestions && focusedField === f.name && (() => {
+                            const filtered = f.suggestions.filter(s => s.toLowerCase().includes((form[f.name] || '').toLowerCase()));
+                            return filtered.length > 0 ? (
+                              <div className="autocomplete-list" ref={suggestRef}>
+                                {filtered.map(s => (
+                                  <div key={s} className="autocomplete-item" onMouseDown={() => { setForm({ ...form, [f.name]: s }); setFocusedField(null); }}>{s}</div>
+                                ))}
+                              </div>
+                            ) : null;
+                          })()}
+                        </>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -191,9 +209,12 @@ function MasterSection({ title, icon, items, fields, apiUrl, onReload }) {
                 <div>
                   <div className="master-item-name">
                     {fields.map(f => f.bold ? (f.format ? f.format(item[f.name]) : item[f.name]) : null).filter(Boolean).join(' ')}
+                    {fields.some(f => f.type === 'checkbox' && item[f.name]) && (
+                      <span style={{ marginLeft: 6, fontSize: 10, background: 'rgba(245,166,35,0.15)', color: '#f5a623', padding: '1px 6px', borderRadius: 4 }}>MRU</span>
+                    )}
                   </div>
                   <div className="master-item-sub">
-                    {fields.filter(f => !f.bold).map(f => f.format ? f.format(item[f.name]) : item[f.name]).filter(Boolean).join(' • ')}
+                    {fields.filter(f => !f.bold && f.type !== 'checkbox').map(f => f.format ? f.format(item[f.name]) : item[f.name]).filter(Boolean).join(' • ')}
                   </div>
                 </div>
                 <div className="master-actions">
@@ -279,6 +300,7 @@ export default function MasterDataPage() {
               title="Filling Places" icon="⛽" items={places} apiUrl="/api/filling-places" onReload={loadAll}
               fields={[
                 { name: 'name', placeholder: 'Place name', bold: true, transform: titleCase },
+                { name: 'is_mru', placeholder: 'Mobile Refueling Unit', type: 'checkbox' },
               ]}
             />
             <MasterSection
@@ -300,7 +322,7 @@ export default function MasterDataPage() {
               fields={[
                 { name: 'date', placeholder: 'Date', bold: true, type: 'date', defaultValue: new Date().toISOString().split('T')[0], format: d => { if (!d) return ''; const [y,m,dd] = d.split('-'); return `${dd}/${m}/${y}`; } },
                 { name: 'opening_balance', placeholder: 'Opening Balance (L)' },
-                { name: 'note', placeholder: 'Note (optional)' },
+                { name: 'filling_place', placeholder: 'Fuel Station', suggestions: places.filter(p => p.is_mru).map(p => p.name) },
               ]}
             />
           </div>

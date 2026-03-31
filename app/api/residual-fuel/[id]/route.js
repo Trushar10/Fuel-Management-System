@@ -16,13 +16,13 @@ export async function GET(request, { params }) {
 export async function PUT(request, { params }) {
   try {
     const { id } = await params;
-    const { date, opening_balance, note } = await request.json();
+    const { date, opening_balance, filling_place, note } = await request.json();
     if (!date || opening_balance == null) return NextResponse.json({ error: 'Date and opening balance are required' }, { status: 400 });
 
     const db = await getDb();
     await db.execute({
-      sql: 'UPDATE residual_fuel SET date=?, opening_balance=?, note=? WHERE id=?',
-      args: [date, Number(opening_balance), (note || '').trim(), id],
+      sql: 'UPDATE residual_fuel SET date=?, opening_balance=?, filling_place=?, note=? WHERE id=?',
+      args: [date, Number(opening_balance), (filling_place || '').trim(), (note || '').trim(), id],
     });
     const row = await db.execute({ sql: 'SELECT * FROM residual_fuel WHERE id = ?', args: [id] });
     return NextResponse.json(row.rows[0]);
