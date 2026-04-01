@@ -258,11 +258,12 @@ export default function MasterDataPage() {
   const [residualFuel, setResidualFuel] = useState([]);
   const [rentedVehicles, setRentedVehicles] = useState([]);
   const [staff, setStaff] = useState([]);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
-    const [d, v, p, fr, c, rf, rv, st] = await Promise.all([
+    const [d, v, p, fr, c, rf, rv, st, pr] = await Promise.all([
       fetch('/api/drivers').then(r => r.json()),
       fetch('/api/vehicles').then(r => r.json()),
       fetch('/api/filling-places').then(r => r.json()),
@@ -271,6 +272,7 @@ export default function MasterDataPage() {
       fetch('/api/residual-fuel').then(r => r.json()),
       fetch('/api/rented-vehicles').then(r => r.json()),
       fetch('/api/staff').then(r => r.json()),
+      fetch('/api/products').then(r => r.json()),
     ]);
     if (Array.isArray(d)) setDrivers(d);
     if (Array.isArray(v)) setVehicles(v);
@@ -280,6 +282,7 @@ export default function MasterDataPage() {
     if (Array.isArray(rf)) setResidualFuel(rf);
     if (Array.isArray(rv)) setRentedVehicles(rv);
     if (Array.isArray(st)) setStaff(st);
+    if (Array.isArray(pr)) setProducts(pr);
     setLoading(false);
   }, []);
 
@@ -335,9 +338,15 @@ export default function MasterDataPage() {
               ]}
             />
             <MasterSection
-              title="Fuel Rates" icon="💰" items={fuelRates} apiUrl="/api/fuel-rates" onReload={loadAll}
+              title="Products" icon="📦" items={products} apiUrl="/api/products" onReload={loadAll}
               fields={[
-                { name: 'fuel_type', placeholder: 'Fuel Type', bold: true, type: 'select', options: ['Diesel', 'Petrol', 'Oil'], defaultValue: 'Diesel' },
+                { name: 'name', placeholder: 'Product name', bold: true, transform: titleCase },
+              ]}
+            />
+            <MasterSection
+              title="Product Rates" icon="💰" items={fuelRates} apiUrl="/api/fuel-rates" onReload={loadAll}
+              fields={[
+                { name: 'fuel_type', placeholder: 'Product', bold: true, type: 'select', options: products.map(p => p.name), defaultValue: '' },
                 { name: 'date', placeholder: 'Date', type: 'date', defaultValue: new Date().toISOString().split('T')[0], format: d => { if (!d) return ''; const [y,m,dd] = d.split('-'); return `${dd}/${m}/${y}`; } },
                 { name: 'rate', placeholder: 'Rate per litre' },
               ]}
