@@ -1,0 +1,16 @@
+import { NextResponse } from 'next/server';
+import { getDb } from '@/lib/db';
+
+export async function DELETE(request, { params }) {
+  try {
+    const { id: rawId } = await params;
+    const id = parseInt(rawId, 10);
+    if (isNaN(id)) return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
+
+    const db = await getDb();
+    await db.execute({ sql: 'DELETE FROM fuel_oil_entries WHERE id = ?', args: [id] });
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}

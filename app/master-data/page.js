@@ -257,11 +257,12 @@ export default function MasterDataPage() {
   const [companies, setCompanies] = useState([]);
   const [residualFuel, setResidualFuel] = useState([]);
   const [rentedVehicles, setRentedVehicles] = useState([]);
+  const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
-    const [d, v, p, fr, c, rf, rv] = await Promise.all([
+    const [d, v, p, fr, c, rf, rv, st] = await Promise.all([
       fetch('/api/drivers').then(r => r.json()),
       fetch('/api/vehicles').then(r => r.json()),
       fetch('/api/filling-places').then(r => r.json()),
@@ -269,6 +270,7 @@ export default function MasterDataPage() {
       fetch('/api/companies').then(r => r.json()),
       fetch('/api/residual-fuel').then(r => r.json()),
       fetch('/api/rented-vehicles').then(r => r.json()),
+      fetch('/api/staff').then(r => r.json()),
     ]);
     if (Array.isArray(d)) setDrivers(d);
     if (Array.isArray(v)) setVehicles(v);
@@ -277,6 +279,7 @@ export default function MasterDataPage() {
     if (Array.isArray(c)) setCompanies(c);
     if (Array.isArray(rf)) setResidualFuel(rf);
     if (Array.isArray(rv)) setRentedVehicles(rv);
+    if (Array.isArray(st)) setStaff(st);
     setLoading(false);
   }, []);
 
@@ -344,6 +347,13 @@ export default function MasterDataPage() {
               fields={[
                 { name: 'number', placeholder: 'e.g. GJ-30-HJ-0728', bold: true, transform: formatVehicleNumber },
                 { name: 'company', placeholder: 'Company name', suggestions: companies.map(c => c.name), transform: titleCase },
+              ]}
+            />
+            <MasterSection
+              title="Staff" icon="🧑‍💼" items={staff} apiUrl="/api/staff" onReload={loadAll}
+              fields={[
+                { name: 'name', placeholder: 'Staff name', bold: true, transform: titleCase },
+                { name: 'vehicle_number', placeholder: 'Vehicle number', transform: formatVehicleNumber },
               ]}
             />
             <MasterSection
