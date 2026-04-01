@@ -175,10 +175,11 @@ export default function FuelForm({ id }) {
 
   const isRented = rentedVehicles.some(rv => rv.number.toLowerCase() === form.truck_no.trim().toLowerCase());
 
-  // Auto-fill fuel rate from master data when rented vehicle is selected
+  // Auto-fill fuel rate from latest diesel rate in master data when rented vehicle is selected
   useEffect(() => {
     if (isRented && fuelRates.length > 0 && !form.fuel_rate) {
-      setForm(prev => ({ ...prev, fuel_rate: String(fuelRates[0].rate) }));
+      const dieselRate = fuelRates.find(r => (r.fuel_type || 'Diesel').toLowerCase() === 'diesel');
+      if (dieselRate) setForm(prev => ({ ...prev, fuel_rate: String(dieselRate.rate) }));
     }
     if (!isRented && form.fuel_rate) {
       setForm(prev => ({ ...prev, fuel_rate: '' }));

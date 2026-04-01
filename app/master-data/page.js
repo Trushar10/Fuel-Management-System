@@ -334,7 +334,8 @@ export default function MasterDataPage() {
             <MasterSection
               title="Fuel Rates" icon="💰" items={fuelRates} apiUrl="/api/fuel-rates" onReload={loadAll}
               fields={[
-                { name: 'date', placeholder: 'Date', bold: true, type: 'date', defaultValue: new Date().toISOString().split('T')[0], format: d => { if (!d) return ''; const [y,m,dd] = d.split('-'); return `${dd}/${m}/${y}`; } },
+                { name: 'fuel_type', placeholder: 'Fuel Type', bold: true, type: 'select', options: ['Diesel', 'Petrol', 'Oil'], defaultValue: 'Diesel' },
+                { name: 'date', placeholder: 'Date', type: 'date', defaultValue: new Date().toISOString().split('T')[0], format: d => { if (!d) return ''; const [y,m,dd] = d.split('-'); return `${dd}/${m}/${y}`; } },
                 { name: 'rate', placeholder: 'Rate per litre' },
               ]}
             />
