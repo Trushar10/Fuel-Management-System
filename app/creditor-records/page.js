@@ -152,8 +152,10 @@ export default function FuelCostPage() {
   useEffect(() => {
     if (!form.date || editId) return;
     if (fuelRates.length === 0) { setForm(prev => ({ ...prev, fuel_rate: '' })); return; }
-    const onOrBefore = fuelRates.find(r => r.date <= form.date);
-    const match = onOrBefore || fuelRates[fuelRates.length - 1];
+    const dieselRates = fuelRates.filter(r => (r.fuel_type || 'Diesel').toLowerCase() === 'diesel');
+    if (dieselRates.length === 0) { setForm(prev => ({ ...prev, fuel_rate: '' })); return; }
+    const onOrBefore = dieselRates.find(r => r.date <= form.date);
+    const match = onOrBefore || dieselRates[dieselRates.length - 1];
     setForm(prev => ({ ...prev, fuel_rate: match.rate }));
   }, [form.date, fuelRates, editId]);
 

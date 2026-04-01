@@ -87,7 +87,7 @@ function AutocompleteField({ label, value, onChange, onSelect, suggestions, plac
 const emptyForm = {
   date: new Date().toISOString().split('T')[0],
   truck_no: '', driver_name: '',
-  fuel_qty: '', fuel_rate: '', cost: '', note: '',
+  fuel_qty: '', fuel_rate: '0', cost: '', note: '',
 };
 
 export default function FuelOilPage() {
@@ -128,14 +128,6 @@ export default function FuelOilPage() {
 
   useEffect(() => { loadRecent(); loadMasters(); }, []);
 
-  // Auto-fill fuel rate from latest diesel rate
-  useEffect(() => {
-    if (fuelRates.length > 0 && !form.fuel_rate) {
-      const dieselRate = fuelRates.find(r => (r.fuel_type || 'Diesel').toLowerCase() === 'diesel');
-      if (dieselRate) setForm(prev => prev.fuel_rate ? prev : { ...prev, fuel_rate: String(dieselRate.rate) });
-    }
-  }, [fuelRates]); // eslint-disable-line
-
   // Auto-calculate cost = fuel_qty × fuel_rate
   useEffect(() => {
     const qty = Number(form.fuel_qty) || 0;
@@ -147,10 +139,7 @@ export default function FuelOilPage() {
   const handleChange = e => { setForm(prev => ({ ...prev, [e.target.name]: e.target.value })); };
 
   const resetForm = () => {
-    setForm({
-      ...emptyForm,
-      fuel_rate: fuelRates.length > 0 ? String((fuelRates.find(r => (r.fuel_type || 'Diesel').toLowerCase() === 'diesel') || fuelRates[0]).rate) : '',
-    });
+    setForm({ ...emptyForm });
     setDriverSearch(''); setVehicleSearch('');
     setDriverLocked(false); setVehicleLocked(false);
   };
@@ -275,8 +264,9 @@ export default function FuelOilPage() {
                   <div className="form-group">
                     <label>Fuel Rate (₹/L)</label>
                     <div className="input-unit">
-                      <input type="number" name="fuel_rate" value={form.fuel_rate} onChange={handleChange}
-                        placeholder="0" step="0.01" required className="fc-input" />
+                      <input type="number" name="fuel_rate" value={form.fuel_rate} readOnly
+                        placeholder="0" step="0.01" required className="fc-input"
+                        style={{ background: 'var(--surface)', cursor: 'not-allowed', color: 'var(--muted)' }} />
                       <span className="unit-label">₹</span>
                     </div>
                   </div>
