@@ -233,6 +233,8 @@ export default function FuelOilPage() {
                       if (s === null) { setVehicleSearch(''); setVehicleLocked(false); setForm(prev => ({ ...prev, truck_no: '' })); return; }
                       setVehicleSearch(s.value.number); setVehicleLocked(true);
                       setForm(prev => ({ ...prev, truck_no: s.value.number }));
+                      const matched = staff.find(st => st.vehicle_number && st.vehicle_number.toLowerCase() === s.value.number.toLowerCase());
+                      if (matched) { setDriverSearch(matched.name); setDriverLocked(true); setForm(prev => ({ ...prev, driver_name: matched.name })); }
                     }}
                   />
                   <AutocompleteField
