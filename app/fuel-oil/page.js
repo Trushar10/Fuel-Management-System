@@ -97,8 +97,6 @@ export default function FuelOilPage() {
   const [recentEntries, setRecentEntries] = useState([]);
 
   const [staff, setStaff] = useState([]);
-  const [vehicles, setVehicles] = useState([]);
-  const [rentedVehicles, setRentedVehicles] = useState([]);
   const [fuelRates, setFuelRates] = useState([]);
 
   const [driverLocked, setDriverLocked] = useState(false);
@@ -121,13 +119,9 @@ export default function FuelOilPage() {
   const loadMasters = () => {
     Promise.all([
       fetch('/api/staff').then(r => r.json()),
-      fetch('/api/vehicles').then(r => r.json()),
-      fetch('/api/rented-vehicles').then(r => r.json()),
       fetch('/api/fuel-rates').then(r => r.json()),
-    ]).then(([s, v, rv, fr]) => {
+    ]).then(([s, fr]) => {
       if (Array.isArray(s)) setStaff(s);
-      if (Array.isArray(v)) setVehicles(v);
-      if (Array.isArray(rv)) setRentedVehicles(rv);
       if (Array.isArray(fr)) setFuelRates(fr);
     });
   };
@@ -163,9 +157,9 @@ export default function FuelOilPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const allVehicles = [...vehicles.map(v => v.number.toLowerCase()), ...rentedVehicles.map(rv => rv.number.toLowerCase())];
-    if (!allVehicles.includes(form.truck_no.trim().toLowerCase())) {
-      showToast('Truck No. must be selected from master data', 'error'); return;
+    const staffVehicles = staff.filter(s => s.vehicle_number).map(s => s.vehicle_number.toLowerCase());
+    if (!staffVehicles.includes(form.truck_no.trim().toLowerCase())) {
+      showToast('Truck No. must be selected from staff list', 'error'); return;
     }
     if (!staff.some(s => s.name.toLowerCase() === form.driver_name.trim().toLowerCase())) {
       showToast('Driver Name must be selected from staff list', 'error'); return;
@@ -190,12 +184,8 @@ export default function FuelOilPage() {
         .map(s => ({ label: `${s.name}${s.vehicle_number ? ` — ${s.vehicle_number}` : ''}`, value: s }))
     : [];
   const vehicleSuggestions = vehicleSearch && !vehicleLocked
-    ? [
-        ...vehicles.filter(v => v.number.toLowerCase().includes(vehicleSearch.toLowerCase()))
-          .map(v => ({ label: `${v.number} — ${v.brand}`, value: v })),
-        ...rentedVehicles.filter(rv => rv.number.toLowerCase().includes(vehicleSearch.toLowerCase()) && !vehicles.some(v => v.number.toLowerCase() === rv.number.toLowerCase()))
-          .map(rv => ({ label: `${rv.number} — Rented (${rv.company})`, value: rv })),
-      ]
+    ? staff.filter(s => s.vehicle_number && s.vehicle_number.toLowerCase().includes(vehicleSearch.toLowerCase()))
+        .map(s => ({ label: `${s.vehicle_number} — ${s.name}`, value: { number: s.vehicle_number } }))
     : [];
 
   function fmtDate(d) { if (!d) return ''; const [y, m, dd] = d.split('-'); return `${dd}/${m}/${y}`; }
