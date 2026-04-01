@@ -219,16 +219,16 @@ export default function FuelOilPage() {
                     onChange={val => { const fmt = formatVehicleNumber(val); setVehicleSearch(fmt); setForm(prev => ({ ...prev, truck_no: fmt })); }}
                     suggestions={vehicleSuggestions}
                     onSelect={s => {
-                      if (s === null) { setVehicleSearch(''); setVehicleLocked(false); setForm(prev => ({ ...prev, truck_no: '' })); return; }
+                      if (s === null) { setVehicleSearch(''); setVehicleLocked(false); setForm(prev => ({ ...prev, truck_no: '', fuel_rate: '0' })); return; }
                       setVehicleSearch(s.value.number); setVehicleLocked(true);
-                      setForm(prev => ({ ...prev, truck_no: s.value.number }));
                       const matched = staff.find(st => st.vehicle_number && st.vehicle_number.toLowerCase() === s.value.number.toLowerCase());
                       if (matched) {
-                        setDriverSearch(matched.name); setDriverLocked(true);
-                        setForm(prev => ({ ...prev, driver_name: matched.name }));
                         const fType = (matched.fuel_type || 'Diesel').toLowerCase();
                         const rate = fuelRates.find(r => (r.fuel_type || 'Diesel').toLowerCase() === fType);
-                        if (rate) setForm(prev => ({ ...prev, fuel_rate: String(rate.rate) }));
+                        setDriverSearch(matched.name); setDriverLocked(true);
+                        setForm(prev => ({ ...prev, truck_no: s.value.number, driver_name: matched.name, fuel_rate: rate ? String(rate.rate) : '0' }));
+                      } else {
+                        setForm(prev => ({ ...prev, truck_no: s.value.number, fuel_rate: '0' }));
                       }
                     }}
                   />
