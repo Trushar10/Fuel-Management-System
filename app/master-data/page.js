@@ -363,6 +363,7 @@ export default function MasterDataPage() {
               fields={[
                 { name: 'name', placeholder: 'Staff name', bold: true, transform: titleCase },
                 { name: 'vehicle_number', placeholder: 'Vehicle number', transform: formatVehicleNumber },
+                { name: 'fuel_type', placeholder: 'Fuel Type', type: 'select', options: ['Diesel', 'Petrol'], defaultValue: 'Diesel' },
               ]}
             />
             <MasterSection

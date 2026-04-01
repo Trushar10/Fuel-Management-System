@@ -7,13 +7,13 @@ export async function PUT(request, { params }) {
     const id = parseInt(rawId, 10);
     if (isNaN(id)) return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
 
-    const { name, vehicle_number } = await request.json();
+    const { name, vehicle_number, fuel_type } = await request.json();
     if (!name) return NextResponse.json({ error: 'Staff name is required' }, { status: 400 });
 
     const db = await getDb();
     await db.execute({
-      sql: 'UPDATE staff SET name = ?, vehicle_number = ? WHERE id = ?',
-      args: [name.trim(), (vehicle_number || '').trim(), id],
+      sql: 'UPDATE staff SET name = ?, vehicle_number = ?, fuel_type = ? WHERE id = ?',
+      args: [name.trim(), (vehicle_number || '').trim(), (fuel_type || 'Diesel').trim(), id],
     });
 
     const row = await db.execute({ sql: 'SELECT * FROM staff WHERE id = ?', args: [id] });
