@@ -4,6 +4,17 @@ import Link from 'next/link';
 
 function fmtDate(d) { if (!d) return ''; const [y,m,dd] = d.split('-'); return `${dd}/${m}/${y}`; }
 
+function getCurrentMonth() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function formatMonthLabel(month) {
+  const [y, m] = month.split('-');
+  const date = new Date(Number(y), Number(m) - 1);
+  return date.toLocaleString('default', { month: 'long', year: 'numeric' });
+}
+
 const FORM_TYPES = [
   { key: 'trip', label: 'Trip Entry', api: '/api/fuel-entries', deleteApi: '/api/fuel-entries', editPath: '/edit' },
   { key: 'mobile', label: 'Mobile Refueling', api: '/api/fuel-cost-entries', deleteApi: '/api/fuel-cost-entries' },
@@ -58,28 +69,38 @@ export default function EntriesPage() {
   const [loading, setLoading] = useState(true);
   const [searchTruck, setSearchTruck] = useState('');
   const [searchDriver, setSearchDriver] = useState('');
-  const [selectedMonth, setSelectedMonth] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
 
   const formConfig = FORM_TYPES.find(f => f.key === formType);
+
+  const prevMonth = () => {
+    const [y, m] = selectedMonth.split('-').map(Number);
+    const d = new Date(y, m - 2, 1);
+    setSelectedMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+  };
+
+  const nextMonth = () => {
+    const [y, m] = selectedMonth.split('-').map(Number);
+    const d = new Date(y, m, 1);
+    setSelectedMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+  };
 
   const load = async () => {
     setLoading(true);
     const params = new URLSearchParams();
     if (searchTruck) params.set('truck_no', searchTruck);
     if (searchDriver) params.set('driver_name', searchDriver);
-    if (selectedMonth) {
-      const [y, m] = selectedMonth.split('-');
-      params.set('from_date', `${y}-${m}-01`);
-      const lastDay = new Date(Number(y), Number(m), 0).getDate();
-      params.set('to_date', `${y}-${m}-${String(lastDay).padStart(2, '0')}`);
-    }
+    const [y, m] = selectedMonth.split('-');
+    params.set('from_date', `${y}-${m}-01`);
+    const lastDay = new Date(Number(y), Number(m), 0).getDate();
+    params.set('to_date', `${y}-${m}-${String(lastDay).padStart(2, '0')}`);
     const res = await fetch(`${formConfig.api}?${params}`);
     const data = await res.json();
     setEntries(Array.isArray(data) ? data : []);
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [formType]); // eslint-disable-line
+  useEffect(() => { load(); }, [formType, selectedMonth]); // eslint-disable-line
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this entry?')) return;
@@ -96,10 +117,10 @@ export default function EntriesPage() {
   const clearFilters = () => {
     setSearchTruck('');
     setSearchDriver('');
-    setSelectedMonth('');
+    setSelectedMonth(getCurrentMonth());
   };
 
-  const hasFilters = searchTruck || searchDriver || selectedMonth;
+  const hasFilters = searchTruck || searchDriver;
   const cols = COLUMNS[formType] || [];
 
   const totalFuel = entries.reduce((a, e) => a + Number(e.fuel_qty || e.qty || 0), 0);
@@ -142,6 +163,15 @@ export default function EntriesPage() {
           ))}
         </div>
 
+        {/* Month Navigation */}
+        <div className="form-card" style={{ padding: '12px 20px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+          <button type="button" onClick={prevMonth} className="btn btn-secondary" style={{ padding: '6px 14px' }}>◀</button>
+          <span style={{ fontWeight: 600, fontSize: 16, minWidth: 160, textAlign: 'center' }}>
+            {formatMonthLabel(selectedMonth)}
+          </span>
+          <button type="button" onClick={nextMonth} className="btn btn-secondary" style={{ padding: '6px 14px' }}>▶</button>
+        </div>
+
         {/* Stats Bar */}
         <div className="entries-stats">
           <div className="estat"><strong>{loading ? '...' : entries.length}</strong> Total Entries</div>
@@ -167,10 +197,6 @@ export default function EntriesPage() {
           <div className="toolbar-search" style={{ maxWidth: 240 }}>
             <span style={{ color: 'var(--muted)' }}>👤</span>
             <input type="text" placeholder="Search by driver..." value={searchDriver} onChange={e => setSearchDriver(e.target.value)} />
-          </div>
-          <div className="toolbar-search" style={{ maxWidth: 180 }}>
-            <span style={{ color: 'var(--muted)', fontSize: 12 }}>Month</span>
-            <input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} />
           </div>
           <button type="submit" className="btn btn-primary" style={{ padding: '8px 16px' }}>Search</button>
           {hasFilters && (

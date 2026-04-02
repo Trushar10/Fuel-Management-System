@@ -9,7 +9,7 @@ const NAV_LINKS = [
   { href: '/purchase', label: 'Purchase', icon: '⛽', group: 'Main' },
   { href: '/mru-entries', label: 'MRU Entries', icon: '📋', group: 'Main' },
   { href: '/creditor-records', label: 'Creditor Records', icon: '🏦', group: 'Main' },
-  { href: '/entries', label: 'All Entries', icon: '📋', group: 'Finance' },
+  { href: '/entries', label: 'All Entries', icon: '📋', group: 'Entries' },
   { href: '/master-data', label: 'Master Data', icon: '⚙️', group: 'Setup' },
 ];
 
