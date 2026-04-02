@@ -286,7 +286,7 @@ export default function FuelForm({ id }) {
                 onChange={val => { const fmt = formatVehicleNumber(val); setVehicleSearch(fmt); setForm({ ...form, truck_no: fmt }); setSuccess(''); }}
                 suggestions={vehicleSuggestions}
                 onSelect={s => {
-                  if (s === null) { setVehicleSearch(''); setVehicleLocked(false); setForm({ ...form, truck_no: '' }); return; }
+                  if (s === null) { setVehicleSearch(''); setVehicleLocked(false); setFuelRateLocked(false); setForm({ ...form, truck_no: '', fuel_rate: '' }); return; }
                   setVehicleSearch(s.value.number); setVehicleLocked(true);
                   setForm({ ...form, truck_no: s.value.number });
                 }}
@@ -338,33 +338,6 @@ export default function FuelForm({ id }) {
                   <span className="unit-label">L</span>
                 </div>
               </div>
-              {selectedVehicleFuelType && (
-                <>
-                  <div className="form-group">
-                    <label>Fuel Rate (₹/L) — {selectedVehicleFuelType}</label>
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      <div className="input-unit" style={{ flex: 1 }}>
-                        <input type="number" name="fuel_rate" value={form.fuel_rate} onChange={handleChange}
-                          placeholder="0" step="0.01" className="fc-input"
-                          readOnly={fuelRateLocked}
-                          style={fuelRateLocked ? { background: 'var(--surface)', cursor: 'not-allowed', color: 'var(--muted)' } : {}} />
-                        <span className="unit-label">₹</span>
-                      </div>
-                      {fuelRateLocked && (
-                        <button type="button" onClick={() => { setFuelRateLocked(false); setForm(prev => ({ ...prev, fuel_rate: '' })); }}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 16, padding: '0 4px' }}>
-                          ✕
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  <div className="form-group">
-                    <label>Total Fuel Cost (auto)</label>
-                    <input type="text" readOnly value={totalFuelCost ? `₹ ${Number(totalFuelCost).toLocaleString()}` : '—'} className="fc-input"
-                      style={{ background: 'var(--surface)', cursor: 'not-allowed', color: 'var(--muted)' }} />
-                  </div>
-                </>
-              )}
             </div>
           </div>
 
@@ -396,11 +369,21 @@ export default function FuelForm({ id }) {
                 <input type="text" readOnly value={distance !== '' ? `${distance} km` : '—'} className="fc-input"
                   style={{ background: 'var(--surface)', cursor: 'not-allowed', color: 'var(--muted)' }} />
               </div>
+              {selectedVehicleFuelType && (
+                <div className="form-group">
+                  <label>Fuel Rate (₹/L) — {selectedVehicleFuelType}</label>
+                  <div className="input-unit">
+                    <input type="number" name="fuel_rate" value={form.fuel_rate} onChange={handleChange}
+                      placeholder="0" step="0.01" className="fc-input" />
+                    <span className="unit-label">₹</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Auto-calculated preview */}
             <div className="cost-preview" style={{ marginTop: 16 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
                 <div>
                   <div className="cost-preview-label">Distance Travelled</div>
                   <div className="cost-preview-value">{distance !== '' ? `${distance} km` : '—'}</div>
@@ -408,6 +391,10 @@ export default function FuelForm({ id }) {
                 <div>
                   <div className="cost-preview-label">Mileage</div>
                   <div className="cost-preview-value">{mileage ? `${mileage} km/L` : '—'}</div>
+                </div>
+                <div>
+                  <div className="cost-preview-label">Total Fuel Cost</div>
+                  <div className="cost-preview-value">{totalFuelCost ? `₹ ${Number(totalFuelCost).toLocaleString()}` : '—'}</div>
                 </div>
               </div>
             </div>
