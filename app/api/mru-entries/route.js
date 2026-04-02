@@ -37,3 +37,13 @@ export async function POST(request) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+
+export async function DELETE() {
+  try {
+    const db = await getDb();
+    await db.execute('DELETE FROM mru_entries');
+    return NextResponse.json({ message: 'All entries deleted' });
+  } catch (err) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
