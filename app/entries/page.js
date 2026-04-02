@@ -58,8 +58,7 @@ export default function EntriesPage() {
   const [loading, setLoading] = useState(true);
   const [searchTruck, setSearchTruck] = useState('');
   const [searchDriver, setSearchDriver] = useState('');
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState('');
 
   const formConfig = FORM_TYPES.find(f => f.key === formType);
 
@@ -68,8 +67,12 @@ export default function EntriesPage() {
     const params = new URLSearchParams();
     if (searchTruck) params.set('truck_no', searchTruck);
     if (searchDriver) params.set('driver_name', searchDriver);
-    if (fromDate) params.set('from_date', fromDate);
-    if (toDate) params.set('to_date', toDate);
+    if (selectedMonth) {
+      const [y, m] = selectedMonth.split('-');
+      params.set('from_date', `${y}-${m}-01`);
+      const lastDay = new Date(Number(y), Number(m), 0).getDate();
+      params.set('to_date', `${y}-${m}-${String(lastDay).padStart(2, '0')}`);
+    }
     const res = await fetch(`${formConfig.api}?${params}`);
     const data = await res.json();
     setEntries(Array.isArray(data) ? data : []);
@@ -93,14 +96,30 @@ export default function EntriesPage() {
   const clearFilters = () => {
     setSearchTruck('');
     setSearchDriver('');
-    setFromDate('');
-    setToDate('');
+    setSelectedMonth('');
   };
 
-  const hasFilters = searchTruck || searchDriver || fromDate || toDate;
+  const hasFilters = searchTruck || searchDriver || selectedMonth;
   const cols = COLUMNS[formType] || [];
 
   const totalFuel = entries.reduce((a, e) => a + Number(e.fuel_qty || e.qty || 0), 0);
+
+  // Group entries by month
+  const grouped = entries.reduce((acc, e) => {
+    const d = e.date || '';
+    const monthKey = d.slice(0, 7); // YYYY-MM
+    if (!acc[monthKey]) acc[monthKey] = [];
+    acc[monthKey].push(e);
+    return acc;
+  }, {});
+  const monthKeys = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+
+  const fmtMonth = (key) => {
+    if (!key) return 'Unknown';
+    const [y, m] = key.split('-');
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${months[Number(m) - 1]} ${y}`;
+  };
 
   return (
     <>
@@ -149,13 +168,9 @@ export default function EntriesPage() {
             <span style={{ color: 'var(--muted)' }}>👤</span>
             <input type="text" placeholder="Search by driver..." value={searchDriver} onChange={e => setSearchDriver(e.target.value)} />
           </div>
-          <div className="toolbar-search" style={{ maxWidth: 170 }}>
-            <span style={{ color: 'var(--muted)', fontSize: 12 }}>From</span>
-            <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} />
-          </div>
-          <div className="toolbar-search" style={{ maxWidth: 170 }}>
-            <span style={{ color: 'var(--muted)', fontSize: 12 }}>To</span>
-            <input type="date" value={toDate} onChange={e => setToDate(e.target.value)} />
+          <div className="toolbar-search" style={{ maxWidth: 180 }}>
+            <span style={{ color: 'var(--muted)', fontSize: 12 }}>Month</span>
+            <input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} />
           </div>
           <button type="submit" className="btn btn-primary" style={{ padding: '8px 16px' }}>Search</button>
           {hasFilters && (
@@ -174,50 +189,60 @@ export default function EntriesPage() {
             </p>
           </div>
         ) : (
-          <div className="table-card">
-            <table>
-              <thead>
-                <tr>
-                  {cols.map(c => (
-                    <th key={c.key} style={c.right ? { textAlign: 'right' } : {}}>{c.label}</th>
-                  ))}
-                  <th style={{ textAlign: 'center' }}>ACTIONS</th>
-                </tr>
-              </thead>
-              <tbody>
-                {entries.map((entry) => (
-                  <tr key={entry.id}>
-                    {cols.map(c => {
-                      let val = entry[c.key];
-                      if (c.fmt) val = c.fmt(val);
-                      if (c.num) val = Number(val || 0).toLocaleString();
-                      const display = `${c.prefix || ''}${val ?? ''}${c.suffix || ''}`;
-                      if (c.badge) {
-                        const m = Number(entry[c.key] || 0);
-                        return (
-                          <td key={c.key} style={{ textAlign: 'right' }}>
-                            <span className={`badge ${m >= 4 ? 'badge-green' : m >= 2.5 ? 'badge-orange' : 'badge-red'}`}>
-                              {m} km/L
-                            </span>
+          <div>
+            {monthKeys.map(mk => (
+              <div key={mk} style={{ marginBottom: 24 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span>{fmtMonth(mk)}</span>
+                  <span style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 400 }}>({grouped[mk].length} entries)</span>
+                </div>
+                <div className="table-card">
+                  <table>
+                    <thead>
+                      <tr>
+                        {cols.map(c => (
+                          <th key={c.key} style={c.right ? { textAlign: 'right' } : {}}>{c.label}</th>
+                        ))}
+                        <th style={{ textAlign: 'center' }}>ACTIONS</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {grouped[mk].map((entry) => (
+                        <tr key={entry.id}>
+                          {cols.map(c => {
+                            let val = entry[c.key];
+                            if (c.fmt) val = c.fmt(val);
+                            if (c.num) val = Number(val || 0).toLocaleString();
+                            const display = `${c.prefix || ''}${val ?? ''}${c.suffix || ''}`;
+                            if (c.badge) {
+                              const m = Number(entry[c.key] || 0);
+                              return (
+                                <td key={c.key} style={{ textAlign: 'right' }}>
+                                  <span className={`badge ${m >= 4 ? 'badge-green' : m >= 2.5 ? 'badge-orange' : 'badge-red'}`}>
+                                    {m} km/L
+                                  </span>
+                                </td>
+                              );
+                            }
+                            return (
+                              <td key={c.key} className={c.cls || ''} style={{ ...(c.right ? { textAlign: 'right' } : {}), ...(c.style || {}) }}>
+                                {display}
+                              </td>
+                            );
+                          })}
+                          <td style={{ textAlign: 'center' }}>
+                            <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
+                              {formConfig.editPath && <Link href={`${formConfig.editPath}/${entry.id}`} className="icon-btn">✏️</Link>}
+                              <button onClick={() => handleDelete(entry.id)} className="icon-btn">🗑️</button>
+                            </div>
                           </td>
-                        );
-                      }
-                      return (
-                        <td key={c.key} className={c.cls || ''} style={{ ...(c.right ? { textAlign: 'right' } : {}), ...(c.style || {}) }}>
-                          {display}
-                        </td>
-                      );
-                    })}
-                    <td style={{ textAlign: 'center' }}>
-                      <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
-                        {formConfig.editPath && <Link href={`${formConfig.editPath}/${entry.id}`} className="icon-btn">✏️</Link>}
-                        <button onClick={() => handleDelete(entry.id)} className="icon-btn">🗑️</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
