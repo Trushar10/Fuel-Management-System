@@ -173,8 +173,9 @@ export default function FuelOilPage() {
         .map(s => ({ label: `${s.name}${s.vehicle_number ? ` — ${s.vehicle_number}` : ''}`, value: s }))
     : [];
   const vehicleSuggestions = vehicleSearch && !vehicleLocked
-    ? staff.filter(s => s.vehicle_number && s.vehicle_number.toLowerCase().includes(vehicleSearch.toLowerCase()))
-        .map(s => ({ label: `${s.vehicle_number} — ${s.name}`, value: { number: s.vehicle_number } }))
+    ? (() => { const q = vehicleSearch.replace(/[^a-z0-9]/gi, '').toLowerCase();
+      return staff.filter(s => s.vehicle_number && s.vehicle_number.replace(/[^a-z0-9]/gi, '').toLowerCase().includes(q))
+        .map(s => ({ label: `${s.vehicle_number} — ${s.name}`, value: { number: s.vehicle_number } })); })()
     : [];
 
   function fmtDate(d) { if (!d) return ''; const [y, m, dd] = d.split('-'); return `${dd}/${m}/${y}`; }

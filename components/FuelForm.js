@@ -233,12 +233,13 @@ export default function FuelForm({ id }) {
         .map(d => ({ label: `${d.name} — ${d.phone}`, value: d }))
     : [];
   const vehicleSuggestions = vehicleSearch && !vehicleLocked
-    ? [
-        ...vehicles.filter(v => v.number.toLowerCase().includes(vehicleSearch.toLowerCase()))
+    ? (() => { const q = vehicleSearch.replace(/[^a-z0-9]/gi, '').toLowerCase();
+      return [
+        ...vehicles.filter(v => v.number.replace(/[^a-z0-9]/gi, '').toLowerCase().includes(q))
           .map(v => ({ label: `${v.number} — ${v.fuel_type || 'Diesel'}`, value: v })),
-        ...rentedVehicles.filter(rv => rv.number.toLowerCase().includes(vehicleSearch.toLowerCase()) && !vehicles.some(v => v.number.toLowerCase() === rv.number.toLowerCase()))
+        ...rentedVehicles.filter(rv => rv.number.replace(/[^a-z0-9]/gi, '').toLowerCase().includes(q) && !vehicles.some(v => v.number.toLowerCase() === rv.number.toLowerCase()))
           .map(rv => ({ label: `${rv.number} — Rented (${rv.company})`, value: rv })),
-      ]
+      ]; })()
     : [];
   const placeSuggestions = placeSearch && !placeLocked
     ? places.filter(p => p.name.toLowerCase().includes(placeSearch.toLowerCase()))

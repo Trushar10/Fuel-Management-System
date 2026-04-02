@@ -217,8 +217,9 @@ export default function FuelCostPage() {
         .map(d => ({ label: `${d.name} — ${d.phone}`, value: d }))
     : [];
   const vehicleSuggestions = vehicleSearch && !vehicleLocked
-    ? vehicles.filter(v => v.number.toLowerCase().includes(vehicleSearch.toLowerCase()))
-        .map(v => ({ label: `${v.number} — ${v.brand}`, value: v }))
+    ? (() => { const q = vehicleSearch.replace(/[^a-z0-9]/gi, '').toLowerCase();
+      return vehicles.filter(v => v.number.replace(/[^a-z0-9]/gi, '').toLowerCase().includes(q))
+        .map(v => ({ label: `${v.number} — ${v.brand}`, value: v })); })()
     : [];
   const placeSuggestions = placeSearch && !placeLocked
     ? places.filter(p => p.name.toLowerCase().includes(placeSearch.toLowerCase()))
