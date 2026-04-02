@@ -13,9 +13,9 @@ export async function GET() {
 
 export async function POST(request) {
   try {
-    const { date, truck_no, driver_name, fuel_qty, fuel_rate, cost, note } = await request.json();
+    const { date, vehicle_no, driver_name, fuel_qty, fuel_rate, cost, note } = await request.json();
 
-    if (!date || !truck_no || !driver_name || fuel_qty == null || fuel_rate == null || cost == null) {
+    if (!date || !vehicle_no || !driver_name || fuel_qty == null || fuel_rate == null || cost == null) {
       return NextResponse.json({ error: 'All fields except note are required' }, { status: 400 });
     }
     if (Number(fuel_qty) <= 0) {
@@ -24,9 +24,9 @@ export async function POST(request) {
 
     const db = await getDb();
     const result = await db.execute({
-      sql: `INSERT INTO fuel_oil_entries (date, truck_no, driver_name, fuel_qty, fuel_rate, cost, note)
+      sql: `INSERT INTO fuel_oil_entries (date, vehicle_no, driver_name, fuel_qty, fuel_rate, cost, note)
             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      args: [date, truck_no.trim(), driver_name.trim(), Number(fuel_qty), Number(fuel_rate),
+      args: [date, vehicle_no.trim(), driver_name.trim(), Number(fuel_qty), Number(fuel_rate),
              Number(cost), (note || '').trim()],
     });
 

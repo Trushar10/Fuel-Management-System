@@ -6,7 +6,7 @@ export async function GET(request) {
     const db = await getDb();
     const { searchParams } = new URL(request.url);
     const month = searchParams.get('month');
-    const truck_no = searchParams.get('truck_no');
+    const vehicle_no = searchParams.get('vehicle_no');
     const driver_name = searchParams.get('driver_name');
     const company = searchParams.get('company');
 
@@ -24,15 +24,15 @@ export async function GET(request) {
     const args = [startDate, endDate];
 
     if (company) {
-      joins.push('LEFT JOIN vehicles v ON fe.truck_no = v.number');
+      joins.push('LEFT JOIN vehicles v ON fe.vehicle_no = v.number');
       joins.push('LEFT JOIN drivers d ON fe.driver_name = d.name');
       conditions.push('(v.company = ? OR d.company = ?)');
       args.push(company, company);
     }
 
-    if (truck_no) {
-      conditions.push('fe.truck_no = ?');
-      args.push(truck_no);
+    if (vehicle_no) {
+      conditions.push('fe.vehicle_no = ?');
+      args.push(vehicle_no);
     }
 
     if (driver_name) {

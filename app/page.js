@@ -54,7 +54,7 @@ export default function Dashboard() {
     if (!driversLoaded) return;
     setLoading(true);
     const params = new URLSearchParams({ month });
-    if (vehicle) params.set('truck_no', vehicle);
+    if (vehicle) params.set('vehicle_no', vehicle);
     if (driver) params.set('driver_name', driver);
 
     fetch(`/api/fuel-entries/analytics/daily?${params}`)

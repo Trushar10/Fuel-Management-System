@@ -86,7 +86,7 @@ function AutocompleteField({ label, value, onChange, onSelect, suggestions, plac
 
 const emptyForm = {
   date: new Date().toISOString().split('T')[0],
-  truck_no: '', driver_name: '',
+  vehicle_no: '', driver_name: '',
   fuel_qty: '', fuel_rate: '0', cost: '', note: '',
 };
 
@@ -147,8 +147,8 @@ export default function FuelOilPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const staffVehicles = staff.filter(s => s.vehicle_number).map(s => s.vehicle_number.toLowerCase());
-    if (!staffVehicles.includes(form.truck_no.trim().toLowerCase())) {
-      showToast('Truck No. must be selected from staff list', 'error'); return;
+    if (!staffVehicles.includes(form.vehicle_no.trim().toLowerCase())) {
+      showToast('Vehicle No. must be selected from staff list', 'error'); return;
     }
     if (!staff.some(s => s.name.toLowerCase() === form.driver_name.trim().toLowerCase())) {
       showToast('Driver Name must be selected from staff list', 'error'); return;
@@ -214,21 +214,21 @@ export default function FuelOilPage() {
                     <input type="date" name="date" value={form.date} onChange={handleChange} required className="fc-input" />
                   </div>
                   <AutocompleteField
-                    label="Truck No." value={vehicleSearch} placeholder="e.g. GJ-05-AB-1234" required
+                    label="Vehicle No." value={vehicleSearch} placeholder="e.g. GJ-05-AB-1234" required
                     readOnly={vehicleLocked}
-                    onChange={val => { const fmt = formatVehicleNumber(val); setVehicleSearch(fmt); setForm(prev => ({ ...prev, truck_no: fmt })); }}
+                    onChange={val => { const fmt = formatVehicleNumber(val); setVehicleSearch(fmt); setForm(prev => ({ ...prev, vehicle_no: fmt })); }}
                     suggestions={vehicleSuggestions}
                     onSelect={s => {
-                      if (s === null) { setVehicleSearch(''); setVehicleLocked(false); setForm(prev => ({ ...prev, truck_no: '', fuel_rate: '0' })); return; }
+                      if (s === null) { setVehicleSearch(''); setVehicleLocked(false); setForm(prev => ({ ...prev, vehicle_no: '', fuel_rate: '0' })); return; }
                       setVehicleSearch(s.value.number); setVehicleLocked(true);
                       const matched = staff.find(st => st.vehicle_number && st.vehicle_number.toLowerCase() === s.value.number.toLowerCase());
                       if (matched) {
                         const fType = (matched.fuel_type || 'Diesel').toLowerCase();
                         const rate = fuelRates.find(r => (r.fuel_type || 'Diesel').toLowerCase() === fType);
                         setDriverSearch(matched.name); setDriverLocked(true);
-                        setForm(prev => ({ ...prev, truck_no: s.value.number, driver_name: matched.name, fuel_rate: rate ? String(rate.rate) : '0' }));
+                        setForm(prev => ({ ...prev, vehicle_no: s.value.number, driver_name: matched.name, fuel_rate: rate ? String(rate.rate) : '0' }));
                       } else {
-                        setForm(prev => ({ ...prev, truck_no: s.value.number, fuel_rate: '0' }));
+                        setForm(prev => ({ ...prev, vehicle_no: s.value.number, fuel_rate: '0' }));
                       }
                     }}
                   />
@@ -334,7 +334,7 @@ export default function FuelOilPage() {
                       {recentEntries.map((entry) => (
                         <tr key={entry.id}>
                           <td style={{ fontSize: 11, color: 'var(--muted)' }}>{fmtDate(entry.date)}</td>
-                          <td className="td-main">{entry.truck_no}</td>
+                          <td className="td-main">{entry.vehicle_no}</td>
                           <td>{entry.driver_name}</td>
                           <td style={{ textAlign: 'right' }}>{entry.fuel_qty} L</td>
                           <td style={{ textAlign: 'right' }}>₹{entry.fuel_rate}</td>

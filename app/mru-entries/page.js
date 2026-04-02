@@ -7,7 +7,7 @@ function fmtDate(d) { if (!d) return ''; const [y, m, dd] = d.split('-'); return
 export default function MRUEntriesPage() {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTruck, setSearchTruck] = useState('');
+  const [searchVehicle, setSearchTruck] = useState('');
   const [searchDriver, setSearchDriver] = useState('');
   const [searchMru, setSearchMru] = useState('');
 
@@ -17,7 +17,7 @@ export default function MRUEntriesPage() {
     const data = await res.json();
     if (Array.isArray(data)) {
       let filtered = data;
-      if (searchTruck) filtered = filtered.filter(e => e.truck_no?.toLowerCase().includes(searchTruck.toLowerCase()));
+      if (searchVehicle) filtered = filtered.filter(e => e.vehicle_no?.toLowerCase().includes(searchVehicle.toLowerCase()));
       if (searchDriver) filtered = filtered.filter(e => e.driver_name?.toLowerCase().includes(searchDriver.toLowerCase()));
       if (searchMru) filtered = filtered.filter(e => e.mru_name?.toLowerCase().includes(searchMru.toLowerCase()));
       setEntries(filtered);
@@ -39,7 +39,7 @@ export default function MRUEntriesPage() {
     setSearchMru('');
   };
 
-  const hasFilters = searchTruck || searchDriver || searchMru;
+  const hasFilters = searchVehicle || searchDriver || searchMru;
 
   const totalFilled = entries.reduce((a, e) => a + Number(e.qty || 0), 0);
   const totalDelivered = entries.reduce((a, e) => a + Number(e.delivered_fuel || 0), 0);
@@ -69,7 +69,7 @@ export default function MRUEntriesPage() {
         <form onSubmit={e => { e.preventDefault(); load(); }} className="toolbar">
           <div className="toolbar-search">
             <span style={{ color: 'var(--muted)' }}>🔍</span>
-            <input type="text" placeholder="Search by truck no..." value={searchTruck} onChange={e => setSearchTruck(e.target.value)} />
+            <input type="text" placeholder="Search by truck no..." value={searchVehicle} onChange={e => setSearchTruck(e.target.value)} />
           </div>
           <div className="toolbar-search" style={{ maxWidth: 240 }}>
             <span style={{ color: 'var(--muted)' }}>👤</span>
@@ -118,7 +118,7 @@ export default function MRUEntriesPage() {
                   <tr key={entry.id}>
                     <td style={{ fontSize: 11, color: 'var(--muted)' }}>{fmtDate(entry.date)}</td>
                     <td>{entry.mru_name || '—'}</td>
-                    <td className="td-main">{entry.truck_no}</td>
+                    <td className="td-main">{entry.vehicle_no}</td>
                     <td>{entry.driver_name}</td>
                     <td style={{ fontSize: 11, color: 'var(--muted)' }}>{entry.driver_phone}</td>
                     <td style={{ textAlign: 'right' }}>{entry.balance_stock} L</td>

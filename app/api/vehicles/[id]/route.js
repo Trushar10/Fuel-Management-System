@@ -19,7 +19,7 @@ export async function PUT(request, { params }) {
 
     // Cascade update to all fuel entries with this vehicle
     await db.execute({
-      sql: 'UPDATE fuel_entries SET truck_no = ? WHERE truck_no = ?',
+      sql: 'UPDATE fuel_entries SET vehicle_no = ? WHERE vehicle_no = ?',
       args: [number.trim(), oldRow.number],
     });
 

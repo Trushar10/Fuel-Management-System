@@ -25,7 +25,7 @@ const FORM_TYPES = [
 const COLUMNS = {
   trip: [
     { key: 'date', label: 'DATE', fmt: fmtDate, style: { fontSize: 11, color: 'var(--muted)' } },
-    { key: 'truck_no', label: 'VEHICLE', cls: 'td-main' },
+    { key: 'vehicle_no', label: 'VEHICLE', cls: 'td-main' },
     { key: 'driver_name', label: 'DRIVER' },
     { key: 'driver_phone', label: 'PHONE', style: { fontSize: 11, color: 'var(--muted)' } },
     { key: 'fuel_qty', label: 'FUEL (L)', right: true, cls: 'td-main', suffix: ' L' },
@@ -35,7 +35,7 @@ const COLUMNS = {
   ],
   mobile: [
     { key: 'date', label: 'DATE', fmt: fmtDate, style: { fontSize: 11, color: 'var(--muted)' } },
-    { key: 'truck_no', label: 'VEHICLE', cls: 'td-main' },
+    { key: 'vehicle_no', label: 'VEHICLE', cls: 'td-main' },
     { key: 'driver_name', label: 'DRIVER' },
     { key: 'fuel_qty', label: 'FUEL (L)', right: true, cls: 'td-main', suffix: ' L' },
     { key: 'fuel_rate', label: 'RATE', right: true, prefix: '₹' },
@@ -44,7 +44,7 @@ const COLUMNS = {
   ],
   purchase: [
     { key: 'date', label: 'DATE', fmt: fmtDate, style: { fontSize: 11, color: 'var(--muted)' } },
-    { key: 'truck_no', label: 'VEHICLE', cls: 'td-main' },
+    { key: 'vehicle_no', label: 'VEHICLE', cls: 'td-main' },
     { key: 'driver_name', label: 'DRIVER' },
     { key: 'fuel_qty', label: 'QTY (L)', right: true, cls: 'td-main', suffix: ' L' },
     { key: 'fuel_rate', label: 'RATE', right: true, prefix: '₹' },
@@ -54,7 +54,7 @@ const COLUMNS = {
   mru: [
     { key: 'date', label: 'DATE', fmt: fmtDate, style: { fontSize: 11, color: 'var(--muted)' } },
     { key: 'mru_name', label: 'MRU NAME', cls: 'td-main' },
-    { key: 'truck_no', label: 'VEHICLE' },
+    { key: 'vehicle_no', label: 'VEHICLE' },
     { key: 'driver_name', label: 'DRIVER' },
     { key: 'balance_stock', label: 'BAL. STOCK', right: true, suffix: ' L' },
     { key: 'qty', label: 'QTY (L)', right: true, cls: 'td-main', suffix: ' L' },
@@ -67,7 +67,7 @@ export default function EntriesPage() {
   const [formType, setFormType] = useState('trip');
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTruck, setSearchTruck] = useState('');
+  const [searchVehicle, setSearchTruck] = useState('');
   const [searchDriver, setSearchDriver] = useState('');
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
 
@@ -88,7 +88,7 @@ export default function EntriesPage() {
   const load = async () => {
     setLoading(true);
     const params = new URLSearchParams();
-    if (searchTruck) params.set('truck_no', searchTruck);
+    if (searchVehicle) params.set('vehicle_no', searchVehicle);
     if (searchDriver) params.set('driver_name', searchDriver);
     const [y, m] = selectedMonth.split('-');
     params.set('from_date', `${y}-${m}-01`);
@@ -120,7 +120,7 @@ export default function EntriesPage() {
     setSelectedMonth(getCurrentMonth());
   };
 
-  const hasFilters = searchTruck || searchDriver;
+  const hasFilters = searchVehicle || searchDriver;
   const cols = COLUMNS[formType] || [];
 
   const totalFuel = entries.reduce((a, e) => a + Number(e.fuel_qty || e.qty || 0), 0);
@@ -183,7 +183,7 @@ export default function EntriesPage() {
         <form onSubmit={e => { e.preventDefault(); load(); }} className="toolbar">
           <div className="toolbar-search">
             <span style={{ color: 'var(--muted)' }}>🔍</span>
-            <input type="text" placeholder="Search by truck no..." value={searchTruck} onChange={e => setSearchTruck(e.target.value)} />
+            <input type="text" placeholder="Search by truck no..." value={searchVehicle} onChange={e => setSearchTruck(e.target.value)} />
           </div>
           <div className="toolbar-search" style={{ maxWidth: 240 }}>
             <span style={{ color: 'var(--muted)' }}>👤</span>

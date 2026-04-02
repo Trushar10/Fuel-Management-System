@@ -23,9 +23,9 @@ export async function PUT(request, { params }) {
     if (isNaN(id)) return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
 
     const body = await request.json();
-    const { date, truck_no, driver_name, fuel_qty, fuel_rate, filling_place } = body;
+    const { date, vehicle_no, driver_name, fuel_qty, fuel_rate, filling_place } = body;
 
-    if (!date || !truck_no || !driver_name || fuel_qty == null || fuel_rate == null || !filling_place) {
+    if (!date || !vehicle_no || !driver_name || fuel_qty == null || fuel_rate == null || !filling_place) {
       return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
     }
 
@@ -33,9 +33,9 @@ export async function PUT(request, { params }) {
 
     const db = await getDb();
     await db.execute({
-      sql: `UPDATE fuel_cost_entries SET date=?, truck_no=?, driver_name=?, fuel_qty=?, fuel_rate=?, cost=?, filling_place=?
+      sql: `UPDATE fuel_cost_entries SET date=?, vehicle_no=?, driver_name=?, fuel_qty=?, fuel_rate=?, cost=?, filling_place=?
             WHERE id=?`,
-      args: [date, truck_no.trim(), driver_name.trim(), Number(fuel_qty), Number(fuel_rate), cost, filling_place.trim(), id],
+      args: [date, vehicle_no.trim(), driver_name.trim(), Number(fuel_qty), Number(fuel_rate), cost, filling_place.trim(), id],
     });
 
     const row = await db.execute({ sql: 'SELECT * FROM fuel_cost_entries WHERE id = ?', args: [id] });

@@ -82,7 +82,7 @@ function AutocompleteField({ label, value, onChange, onSelect, suggestions, plac
 
 const emptyForm = {
   date: new Date().toISOString().split('T')[0],
-  truck_no: '', driver_phone: '', driver_name: '',
+  vehicle_no: '', driver_phone: '', driver_name: '',
   mru_name: '',
   balance_stock: '', qty: '', tank_balance: '', delivered_fuel: '',
 };
@@ -164,8 +164,8 @@ export default function MRUPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!vehicles.some(v => v.number.toLowerCase() === form.truck_no.trim().toLowerCase())) {
-      showToast('Truck No. must be selected from master data', 'error'); return;
+    if (!vehicles.some(v => v.number.toLowerCase() === form.vehicle_no.trim().toLowerCase())) {
+      showToast('Vehicle No. must be selected from master data', 'error'); return;
     }
     if (!drivers.some(d => d.name.toLowerCase() === form.driver_name.trim().toLowerCase())) {
       showToast('Driver Name must be selected from master data', 'error'); return;
@@ -186,9 +186,9 @@ export default function MRUPage() {
       // After saving, update balance stock for next entry (remaining = tank_balance - delivered_fuel)
       const remaining = String(Math.round(((Number(form.tank_balance) || 0) - (Number(form.delivered_fuel) || 0)) * 100) / 100);
       const savedMru = form.mru_name;
-      const savedVehicle = form.truck_no;
+      const savedVehicle = form.vehicle_no;
       resetForm();
-      setForm(prev => ({ ...prev, mru_name: savedMru, truck_no: savedVehicle, balance_stock: remaining }));
+      setForm(prev => ({ ...prev, mru_name: savedMru, vehicle_no: savedVehicle, balance_stock: remaining }));
       if (savedVehicle) { setVehicleSearch(savedVehicle); setVehicleLocked(true); }
       loadRecent();
     } finally { setLoading(false); }
@@ -245,7 +245,7 @@ export default function MRUPage() {
                       const place = mruPlaces.find(p => p.name === name);
                       const vehicle = place?.associate_vehicle || '';
                       const stock = name ? getBalanceForMru(name) : '';
-                      setForm(prev => ({ ...prev, mru_name: name, truck_no: vehicle || prev.truck_no, balance_stock: stock, qty: '', tank_balance: '', delivered_fuel: '' }));
+                      setForm(prev => ({ ...prev, mru_name: name, vehicle_no: vehicle || prev.vehicle_no, balance_stock: stock, qty: '', tank_balance: '', delivered_fuel: '' }));
                       if (vehicle) { setVehicleSearch(vehicle); setVehicleLocked(true); }
                       else { setVehicleSearch(''); setVehicleLocked(false); }
                     }} required className="fc-input">
@@ -254,14 +254,14 @@ export default function MRUPage() {
                     </select>
                   </div>
                   <AutocompleteField
-                    label="Truck No." value={vehicleSearch} placeholder="e.g. GJ-05-AB-1234" required
+                    label="Vehicle No." value={vehicleSearch} placeholder="e.g. GJ-05-AB-1234" required
                     readOnly={vehicleLocked}
-                    onChange={val => { const fmt = formatVehicleNumber(val); setVehicleSearch(fmt); setForm({ ...form, truck_no: fmt }); }}
+                    onChange={val => { const fmt = formatVehicleNumber(val); setVehicleSearch(fmt); setForm({ ...form, vehicle_no: fmt }); }}
                     suggestions={vehicleSuggestions}
                     onSelect={s => {
-                      if (s === null) { setVehicleSearch(''); setVehicleLocked(false); setForm({ ...form, truck_no: '' }); return; }
+                      if (s === null) { setVehicleSearch(''); setVehicleLocked(false); setForm({ ...form, vehicle_no: '' }); return; }
                       setVehicleSearch(s.value.number); setVehicleLocked(true);
-                      setForm({ ...form, truck_no: s.value.number });
+                      setForm({ ...form, vehicle_no: s.value.number });
                     }}
                   />
                 </div>
@@ -389,7 +389,7 @@ export default function MRUPage() {
                       {recentEntries.map((entry) => (
                         <tr key={entry.id}>
                           <td style={{ fontSize: 11, color: 'var(--muted)' }}>{entry.date}</td>
-                          <td className="td-main">{entry.truck_no}</td>
+                          <td className="td-main">{entry.vehicle_no}</td>
                           <td>{entry.driver_name}</td>
                           <td style={{ textAlign: 'right' }}>{entry.balance_stock} L</td>
                           <td style={{ textAlign: 'right' }}>{entry.qty} L</td>

@@ -10,7 +10,7 @@ export async function GET() {
         ROUND(SUM(fuel_qty), 2) as total_fuel,
         ROUND(SUM(end_km - start_km), 2) as total_distance,
         ROUND(AVG(CASE WHEN fuel_qty > 0 THEN (end_km - start_km) / fuel_qty ELSE 0 END), 2) as avg_mileage,
-        COUNT(DISTINCT truck_no) as total_trucks,
+        COUNT(DISTINCT vehicle_no) as total_trucks,
         COUNT(DISTINCT driver_name) as total_drivers
       FROM fuel_entries
     `);

@@ -18,7 +18,7 @@ const formatVehicleNumber = (raw) => {
 
 const empty = {
   date: new Date().toISOString().split('T')[0],
-  truck_no: '', driver_phone: '', driver_name: '',
+  vehicle_no: '', driver_phone: '', driver_name: '',
   start_km: '', fuel_qty: '', end_km: '', filling_place: '',
   fuel_rate: '',
 };
@@ -156,13 +156,13 @@ export default function FuelForm({ id }) {
         .then(data => {
           if (data.error) { showToast(data.error, 'error'); return; }
           setForm({
-            date: data.date, truck_no: data.truck_no, driver_phone: data.driver_phone,
+            date: data.date, vehicle_no: data.vehicle_no, driver_phone: data.driver_phone,
             driver_name: data.driver_name, start_km: data.start_km, fuel_qty: data.fuel_qty,
             end_km: data.end_km, filling_place: data.filling_place,
             fuel_rate: data.fuel_rate || '',
           });
           setDriverSearch(data.driver_name);
-          setVehicleSearch(data.truck_no);
+          setVehicleSearch(data.vehicle_no);
           setPlaceSearch(data.filling_place);
           setDriverLocked(true); setVehicleLocked(true); setPlaceLocked(true);
         });
@@ -174,11 +174,11 @@ export default function FuelForm({ id }) {
   const mileage = distance !== '' && Number(form.fuel_qty) > 0
     ? (distance / Number(form.fuel_qty)).toFixed(2) : '';
 
-  const isRented = rentedVehicles.some(rv => rv.number.toLowerCase() === form.truck_no.trim().toLowerCase());
+  const isRented = rentedVehicles.some(rv => rv.number.toLowerCase() === form.vehicle_no.trim().toLowerCase());
 
   // Determine fuel type from vehicle or rented vehicle master data
   const selectedVehicleFuelType = (() => {
-    const truckLower = form.truck_no.trim().toLowerCase();
+    const truckLower = form.vehicle_no.trim().toLowerCase();
     const v = vehicles.find(v => v.number.toLowerCase() === truckLower);
     if (v) return v.fuel_type || 'Diesel';
     const rv = rentedVehicles.find(rv => rv.number.toLowerCase() === truckLower);
@@ -212,7 +212,7 @@ export default function FuelForm({ id }) {
   const handleSubmit = async e => {
     e.preventDefault();
     const allVehicles = [...vehicles.map(v => v.number.toLowerCase()), ...rentedVehicles.map(rv => rv.number.toLowerCase())];
-    if (!allVehicles.includes(form.truck_no.trim().toLowerCase())) { showToast('Truck No. must be selected from master data', 'error'); return; }
+    if (!allVehicles.includes(form.vehicle_no.trim().toLowerCase())) { showToast('Vehicle No. must be selected from master data', 'error'); return; }
     if (!drivers.some(d => d.name.toLowerCase() === form.driver_name.trim().toLowerCase())) { showToast('Driver Name must be selected from master data', 'error'); return; }
     if (!places.some(p => p.name.toLowerCase() === form.filling_place.trim().toLowerCase())) { showToast('Place of Filling must be selected from master data', 'error'); return; }
     setLoading(true); setError(''); setSuccess('');
@@ -281,14 +281,14 @@ export default function FuelForm({ id }) {
                 <input type="date" name="date" value={form.date} onChange={handleChange} required className="fc-input" />
               </div>
               <AutocompleteField
-                label="Truck No." value={vehicleSearch} placeholder="e.g. MH-12-AB-1234" required
+                label="Vehicle No." value={vehicleSearch} placeholder="e.g. MH-12-AB-1234" required
                 readOnly={vehicleLocked}
-                onChange={val => { const fmt = formatVehicleNumber(val); setVehicleSearch(fmt); setForm({ ...form, truck_no: fmt }); setSuccess(''); }}
+                onChange={val => { const fmt = formatVehicleNumber(val); setVehicleSearch(fmt); setForm({ ...form, vehicle_no: fmt }); setSuccess(''); }}
                 suggestions={vehicleSuggestions}
                 onSelect={s => {
-                  if (s === null) { setVehicleSearch(''); setVehicleLocked(false); setFuelRateLocked(false); setForm({ ...form, truck_no: '', fuel_rate: '' }); return; }
+                  if (s === null) { setVehicleSearch(''); setVehicleLocked(false); setFuelRateLocked(false); setForm({ ...form, vehicle_no: '', fuel_rate: '' }); return; }
                   setVehicleSearch(s.value.number); setVehicleLocked(true);
-                  setForm({ ...form, truck_no: s.value.number });
+                  setForm({ ...form, vehicle_no: s.value.number });
                 }}
               />
               <AutocompleteField
@@ -445,7 +445,7 @@ export default function FuelForm({ id }) {
                   {recentEntries.map((entry) => (
                     <tr key={entry.id}>
                       <td style={{ fontSize: 11, color: 'var(--muted)' }}>{entry.date}</td>
-                      <td className="td-main">{entry.truck_no}</td>
+                      <td className="td-main">{entry.vehicle_no}</td>
                       <td>{entry.driver_name}</td>
                       <td style={{ textAlign: 'right' }}>{entry.fuel_qty} L</td>
                       <td style={{ textAlign: 'right' }}>{Number(entry.distance).toLocaleString()} km</td>

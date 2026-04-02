@@ -90,7 +90,7 @@ function AutocompleteField({ label, value, onChange, onSelect, suggestions, plac
 export default function FuelCostPage() {
   const today = new Date().toISOString().split('T')[0];
 
-  const [form, setForm] = useState({ date: today, truck_no: '', driver_name: '', fuel_qty: '', fuel_rate: '', filling_place: '' });
+  const [form, setForm] = useState({ date: today, vehicle_no: '', driver_name: '', fuel_qty: '', fuel_rate: '', filling_place: '' });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -139,7 +139,7 @@ export default function FuelCostPage() {
   const loadEntries = () => {
     setEntriesLoading(true);
     const params = new URLSearchParams();
-    if (filterTruck) params.set('truck_no', filterTruck);
+    if (filterTruck) params.set('vehicle_no', filterTruck);
     if (filterDriver) params.set('driver_name', filterDriver);
     fetch(`/api/fuel-cost-entries?${params}`)
       .then(r => r.json())
@@ -168,7 +168,7 @@ export default function FuelCostPage() {
   const handleChange = e => { setForm({ ...form, [e.target.name]: e.target.value }); setError(''); setSuccess(''); };
 
   const resetForm = () => {
-    setForm({ date: today, truck_no: '', driver_name: '', fuel_qty: '', fuel_rate: '', filling_place: '' });
+    setForm({ date: today, vehicle_no: '', driver_name: '', fuel_qty: '', fuel_rate: '', filling_place: '' });
     setDriverSearch(''); setVehicleSearch(''); setPlaceSearch('');
     setDriverLocked(false); setVehicleLocked(false); setPlaceLocked(false);
     setEditId(null);
@@ -176,11 +176,11 @@ export default function FuelCostPage() {
 
   const startEdit = (entry) => {
     setForm({
-      date: entry.date, truck_no: entry.truck_no, driver_name: entry.driver_name,
+      date: entry.date, vehicle_no: entry.vehicle_no, driver_name: entry.driver_name,
       fuel_qty: entry.fuel_qty, fuel_rate: entry.fuel_rate, filling_place: entry.filling_place,
     });
     setDriverSearch(entry.driver_name);
-    setVehicleSearch(entry.truck_no);
+    setVehicleSearch(entry.vehicle_no);
     setPlaceSearch(entry.filling_place);
     setDriverLocked(true); setVehicleLocked(true); setPlaceLocked(true);
     setEditId(entry.id);
@@ -190,7 +190,7 @@ export default function FuelCostPage() {
 
   const handleSubmit = async e => {
     e.preventDefault();
-    if (!vehicles.some(v => v.number.toLowerCase() === form.truck_no.trim().toLowerCase())) { showToast('Truck No. must be selected from master data', 'error'); return; }
+    if (!vehicles.some(v => v.number.toLowerCase() === form.vehicle_no.trim().toLowerCase())) { showToast('Vehicle No. must be selected from master data', 'error'); return; }
     if (!drivers.some(d => d.name.toLowerCase() === form.driver_name.trim().toLowerCase())) { showToast('Driver Name must be selected from master data', 'error'); return; }
     if (!places.some(p => p.name.toLowerCase() === form.filling_place.trim().toLowerCase())) { showToast('Place of Filling must be selected from master data', 'error'); return; }
     setLoading(true); setError(''); setSuccess('');
@@ -286,14 +286,14 @@ export default function FuelCostPage() {
               <input type="date" name="date" value={form.date} onChange={handleChange} required className="fc-input" />
             </div>
             <AutocompleteField
-              label="Truck No." value={vehicleSearch} placeholder="e.g. GJ30T0728" required
+              label="Vehicle No." value={vehicleSearch} placeholder="e.g. GJ30T0728" required
               readOnly={vehicleLocked}
-              onChange={val => { const fmt = formatVehicleNumber(val); setVehicleSearch(fmt); setForm({ ...form, truck_no: fmt }); }}
+              onChange={val => { const fmt = formatVehicleNumber(val); setVehicleSearch(fmt); setForm({ ...form, vehicle_no: fmt }); }}
               suggestions={vehicleSuggestions}
               onSelect={s => {
-                if (s === null) { setVehicleSearch(''); setVehicleLocked(false); setForm({ ...form, truck_no: '' }); return; }
+                if (s === null) { setVehicleSearch(''); setVehicleLocked(false); setForm({ ...form, vehicle_no: '' }); return; }
                 setVehicleSearch(s.value.number); setVehicleLocked(true);
-                setForm({ ...form, truck_no: s.value.number });
+                setForm({ ...form, vehicle_no: s.value.number });
               }}
             />
             <AutocompleteField
@@ -399,7 +399,7 @@ export default function FuelCostPage() {
                 {entries.map((entry) => (
                   <tr key={entry.id}>
                     <td style={{ fontSize: 11, color: 'var(--muted)' }}>{fmtDate(entry.date)}</td>
-                    <td className="td-main">{entry.truck_no}</td>
+                    <td className="td-main">{entry.vehicle_no}</td>
                     <td>{entry.driver_name}</td>
                     <td style={{ textAlign: 'right' }}>{entry.fuel_qty} L</td>
                     <td style={{ textAlign: 'right' }}>₹{Number(entry.fuel_rate).toFixed(2)}</td>

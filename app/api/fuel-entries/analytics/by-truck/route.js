@@ -6,7 +6,7 @@ export async function GET() {
     const db = await getDb();
     const result = await db.execute(`
       SELECT
-        truck_no,
+        vehicle_no,
         COUNT(*) as entries,
         ROUND(SUM(fuel_qty), 2) as total_fuel,
         ROUND(SUM(end_km - start_km), 2) as total_distance,
@@ -14,7 +14,7 @@ export async function GET() {
         ROUND(MIN(CASE WHEN fuel_qty > 0 THEN (end_km - start_km) / fuel_qty ELSE 0 END), 2) as min_mileage,
         ROUND(MAX(CASE WHEN fuel_qty > 0 THEN (end_km - start_km) / fuel_qty ELSE 0 END), 2) as max_mileage
       FROM fuel_entries
-      GROUP BY truck_no
+      GROUP BY vehicle_no
       ORDER BY avg_mileage DESC
     `);
     return NextResponse.json(result.rows);

@@ -14,9 +14,9 @@ export async function GET() {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { date, mru_name, truck_no, driver_phone, driver_name, balance_stock, qty, tank_balance, delivered_fuel } = body;
+    const { date, mru_name, vehicle_no, driver_phone, driver_name, balance_stock, qty, tank_balance, delivered_fuel } = body;
 
-    if (!date || !truck_no || !driver_phone || !driver_name || balance_stock == null || qty == null || tank_balance == null || delivered_fuel == null) {
+    if (!date || !vehicle_no || !driver_phone || !driver_name || balance_stock == null || qty == null || tank_balance == null || delivered_fuel == null) {
       return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
     }
     if (Number(qty) <= 0) {
@@ -25,9 +25,9 @@ export async function POST(request) {
 
     const db = await getDb();
     const result = await db.execute({
-      sql: `INSERT INTO mru_entries (date, mru_name, truck_no, driver_phone, driver_name, balance_stock, qty, tank_balance, delivered_fuel)
+      sql: `INSERT INTO mru_entries (date, mru_name, vehicle_no, driver_phone, driver_name, balance_stock, qty, tank_balance, delivered_fuel)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      args: [date, (mru_name || '').trim(), truck_no.trim(), driver_phone.trim(), driver_name.trim(),
+      args: [date, (mru_name || '').trim(), vehicle_no.trim(), driver_phone.trim(), driver_name.trim(),
              Number(balance_stock), Number(qty), Number(tank_balance), Number(delivered_fuel)],
     });
 
