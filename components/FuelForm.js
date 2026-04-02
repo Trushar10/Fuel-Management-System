@@ -373,8 +373,19 @@ export default function FuelForm({ id }) {
                 <div className="form-group">
                   <label>Fuel Rate (₹/L) — {selectedVehicleFuelType}</label>
                   <div className="input-unit">
-                    <input type="number" name="fuel_rate" value={form.fuel_rate} onChange={handleChange}
-                      placeholder="0" step="0.01" className="fc-input" />
+                    <input type="number" name="fuel_rate" value={form.fuel_rate} readOnly
+                      placeholder="0" step="0.01" className="fc-input"
+                      style={{ background: 'var(--surface)', cursor: 'not-allowed', color: 'var(--muted)' }} />
+                    <span className="unit-label">₹</span>
+                  </div>
+                </div>
+              )}
+              {!selectedVehicleFuelType && (
+                <div className="form-group">
+                  <label>Fuel Rate (₹/L)</label>
+                  <div className="input-unit">
+                    <input type="number" value="0" readOnly className="fc-input"
+                      style={{ background: 'var(--surface)', cursor: 'not-allowed', color: 'var(--muted)' }} />
                     <span className="unit-label">₹</span>
                   </div>
                 </div>
