@@ -7,14 +7,14 @@ export async function PUT(request, { params }) {
     const id = parseInt(rawId, 10);
     if (isNaN(id)) return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
 
-    const { number, company } = await request.json();
+    const { number, company, fuel_type } = await request.json();
     if (!number) return NextResponse.json({ error: 'Vehicle number is required' }, { status: 400 });
 
     const db = await getDb();
     const old = await db.execute({ sql: 'SELECT * FROM rented_vehicles WHERE id = ?', args: [id] });
     if (old.rows.length === 0) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-    await db.execute({ sql: 'UPDATE rented_vehicles SET number = ?, company = ? WHERE id = ?', args: [number.trim(), (company || '').trim(), id] });
+    await db.execute({ sql: 'UPDATE rented_vehicles SET number = ?, company = ?, fuel_type = ? WHERE id = ?', args: [number.trim(), (company || '').trim(), (fuel_type || 'Diesel').trim(), id] });
 
     const row = await db.execute({ sql: 'SELECT * FROM rented_vehicles WHERE id = ?', args: [id] });
     return NextResponse.json(row.rows[0]);

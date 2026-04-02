@@ -13,14 +13,14 @@ export async function GET() {
 
 export async function POST(request) {
   try {
-    const { number, company } = await request.json();
+    const { number, company, fuel_type } = await request.json();
     if (!number) return NextResponse.json({ error: 'Vehicle number is required' }, { status: 400 });
 
     const db = await getDb();
     const existing = await db.execute({ sql: 'SELECT id FROM rented_vehicles WHERE number = ?', args: [number.trim()] });
     if (existing.rows.length > 0) return NextResponse.json({ error: 'This rented vehicle already exists' }, { status: 409 });
 
-    const result = await db.execute({ sql: 'INSERT INTO rented_vehicles (number, company) VALUES (?, ?)', args: [number.trim(), (company || '').trim()] });
+    const result = await db.execute({ sql: 'INSERT INTO rented_vehicles (number, company, fuel_type) VALUES (?, ?, ?)', args: [number.trim(), (company || '').trim(), (fuel_type || 'Diesel').trim()] });
     const row = await db.execute({ sql: 'SELECT * FROM rented_vehicles WHERE id = ?', args: [result.lastInsertRowid] });
     return NextResponse.json(row.rows[0], { status: 201 });
   } catch (err) {

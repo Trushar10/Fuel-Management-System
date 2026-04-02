@@ -119,6 +119,7 @@ export default function FuelForm({ id }) {
   const [driverLocked, setDriverLocked] = useState(false);
   const [vehicleLocked, setVehicleLocked] = useState(false);
   const [placeLocked, setPlaceLocked] = useState(false);
+  const [fuelRateLocked, setFuelRateLocked] = useState(false);
 
   const [driverSearch, setDriverSearch] = useState('');
   const [vehicleSearch, setVehicleSearch] = useState('');
@@ -175,18 +176,29 @@ export default function FuelForm({ id }) {
 
   const isRented = rentedVehicles.some(rv => rv.number.toLowerCase() === form.truck_no.trim().toLowerCase());
 
-  // Auto-fill fuel rate from latest diesel rate in master data when rented vehicle is selected
-  useEffect(() => {
-    if (isRented && fuelRates.length > 0 && !form.fuel_rate) {
-      const dieselRate = fuelRates.find(r => (r.fuel_type || 'Diesel').toLowerCase() === 'diesel');
-      if (dieselRate) setForm(prev => ({ ...prev, fuel_rate: String(dieselRate.rate) }));
-    }
-    if (!isRented && form.fuel_rate) {
-      setForm(prev => ({ ...prev, fuel_rate: '' }));
-    }
-  }, [isRented, fuelRates]); // eslint-disable-line
+  // Determine fuel type from vehicle or rented vehicle master data
+  const selectedVehicleFuelType = (() => {
+    const truckLower = form.truck_no.trim().toLowerCase();
+    const v = vehicles.find(v => v.number.toLowerCase() === truckLower);
+    if (v) return v.fuel_type || 'Diesel';
+    const rv = rentedVehicles.find(rv => rv.number.toLowerCase() === truckLower);
+    if (rv) return rv.fuel_type || 'Diesel';
+    return '';
+  })();
 
-  const totalFuelCost = isRented && Number(form.fuel_qty) > 0 && Number(form.fuel_rate) > 0
+  // Auto-fill fuel rate from latest rate in master data based on vehicle's fuel type
+  useEffect(() => {
+    if (selectedVehicleFuelType && fuelRates.length > 0) {
+      const matchingRate = fuelRates.find(r => (r.fuel_type || 'Diesel').toLowerCase() === selectedVehicleFuelType.toLowerCase());
+      if (matchingRate) { setForm(prev => ({ ...prev, fuel_rate: String(matchingRate.rate) })); setFuelRateLocked(true); }
+      else { setForm(prev => ({ ...prev, fuel_rate: '' })); setFuelRateLocked(false); }
+    }
+    if (!selectedVehicleFuelType) {
+      setForm(prev => ({ ...prev, fuel_rate: '' })); setFuelRateLocked(false);
+    }
+  }, [selectedVehicleFuelType, fuelRates]); // eslint-disable-line
+
+  const totalFuelCost = Number(form.fuel_qty) > 0 && Number(form.fuel_rate) > 0
     ? (Number(form.fuel_qty) * Number(form.fuel_rate)).toFixed(2) : '';
 
   const handleChange = e => { setForm({ ...form, [e.target.name]: e.target.value }); setError(''); setSuccess(''); };
@@ -194,7 +206,7 @@ export default function FuelForm({ id }) {
   const resetForm = () => {
     setForm(empty);
     setDriverSearch(''); setVehicleSearch(''); setPlaceSearch('');
-    setDriverLocked(false); setVehicleLocked(false); setPlaceLocked(false);
+    setDriverLocked(false); setVehicleLocked(false); setPlaceLocked(false); setFuelRateLocked(false);
   };
 
   const handleSubmit = async e => {
@@ -223,7 +235,7 @@ export default function FuelForm({ id }) {
   const vehicleSuggestions = vehicleSearch && !vehicleLocked
     ? [
         ...vehicles.filter(v => v.number.toLowerCase().includes(vehicleSearch.toLowerCase()))
-          .map(v => ({ label: `${v.number} — ${v.brand}`, value: v })),
+          .map(v => ({ label: `${v.number} — ${v.fuel_type || 'Diesel'}`, value: v })),
         ...rentedVehicles.filter(rv => rv.number.toLowerCase().includes(vehicleSearch.toLowerCase()) && !vehicles.some(v => v.number.toLowerCase() === rv.number.toLowerCase()))
           .map(rv => ({ label: `${rv.number} — Rented (${rv.company})`, value: rv })),
       ]
@@ -326,14 +338,24 @@ export default function FuelForm({ id }) {
                   <span className="unit-label">L</span>
                 </div>
               </div>
-              {isRented && (
+              {selectedVehicleFuelType && (
                 <>
                   <div className="form-group">
-                    <label>Fuel Rate (₹/L)</label>
-                    <div className="input-unit">
-                      <input type="number" name="fuel_rate" value={form.fuel_rate} onChange={handleChange}
-                        placeholder="0" step="0.01" className="fc-input" />
-                      <span className="unit-label">₹</span>
+                    <label>Fuel Rate (₹/L) — {selectedVehicleFuelType}</label>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <div className="input-unit" style={{ flex: 1 }}>
+                        <input type="number" name="fuel_rate" value={form.fuel_rate} onChange={handleChange}
+                          placeholder="0" step="0.01" className="fc-input"
+                          readOnly={fuelRateLocked}
+                          style={fuelRateLocked ? { background: 'var(--surface)', cursor: 'not-allowed', color: 'var(--muted)' } : {}} />
+                        <span className="unit-label">₹</span>
+                      </div>
+                      {fuelRateLocked && (
+                        <button type="button" onClick={() => { setFuelRateLocked(false); setForm(prev => ({ ...prev, fuel_rate: '' })); }}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 16, padding: '0 4px' }}>
+                          ✕
+                        </button>
+                      )}
                     </div>
                   </div>
                   <div className="form-group">

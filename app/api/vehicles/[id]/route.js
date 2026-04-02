@@ -7,7 +7,7 @@ export async function PUT(request, { params }) {
     const id = parseInt(rawId, 10);
     if (isNaN(id)) return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
 
-    const { number, brand, company } = await request.json();
+    const { number, fuel_type, company } = await request.json();
     if (!number) return NextResponse.json({ error: 'Vehicle number is required' }, { status: 400 });
 
     const db = await getDb();
@@ -15,7 +15,7 @@ export async function PUT(request, { params }) {
     if (old.rows.length === 0) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
     const oldRow = old.rows[0];
-    await db.execute({ sql: 'UPDATE vehicles SET number = ?, brand = ?, company = ? WHERE id = ?', args: [number.trim(), (brand || '').trim(), (company || '').trim(), id] });
+    await db.execute({ sql: 'UPDATE vehicles SET number = ?, fuel_type = ?, company = ? WHERE id = ?', args: [number.trim(), (fuel_type || 'Diesel').trim(), (company || '').trim(), id] });
 
     // Cascade update to all fuel entries with this vehicle
     await db.execute({

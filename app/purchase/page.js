@@ -162,7 +162,7 @@ export default function FuelOilPage() {
       });
       const data = await res.json();
       if (!res.ok) { showToast(data.error || 'Failed', 'error'); return; }
-      showToast('Fuel & Oil entry saved!', 'success');
+      showToast('Purchase entry saved!', 'success');
       resetForm();
       loadRecent();
     } finally { setLoading(false); }
@@ -182,13 +182,13 @@ export default function FuelOilPage() {
   return (
     <>
       <div className="topbar">
-        <div className="page-title">Fuel & Oil Entry</div>
+        <div className="page-title">Purchase Entry</div>
       </div>
 
       <div className="content-area page-animate">
         <div className="page-head">
           <div>
-            <div className="page-head-title">Fuel & Oil Entry</div>
+            <div className="page-head-title">Purchase Entry</div>
             <div className="page-head-sub">Record fuel and oil purchases</div>
           </div>
         </div>

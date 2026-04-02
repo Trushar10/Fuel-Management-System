@@ -318,7 +318,7 @@ export default function MasterDataPage() {
               title="Vehicles" icon="🚛" items={vehicles} apiUrl="/api/vehicles" onReload={loadAll}
               fields={[
                 { name: 'number', placeholder: 'e.g. GJ-30-HJ-0728', bold: true, transform: formatVehicleNumber },
-                { name: 'brand', placeholder: 'Brand name', transform: titleCase },
+                { name: 'fuel_type', placeholder: 'Fuel Type', type: 'select', options: ['Diesel', 'Petrol'], defaultValue: 'Diesel' },
                 { name: 'company', placeholder: 'Company name', suggestions: companies.map(c => c.name), transform: titleCase },
               ]}
             />
@@ -355,6 +355,7 @@ export default function MasterDataPage() {
               title="Rented Vehicles" icon="🔑" items={rentedVehicles} apiUrl="/api/rented-vehicles" onReload={loadAll}
               fields={[
                 { name: 'number', placeholder: 'e.g. GJ-30-HJ-0728', bold: true, transform: formatVehicleNumber },
+                { name: 'fuel_type', placeholder: 'Fuel Type', type: 'select', options: ['Diesel', 'Petrol'], defaultValue: 'Diesel' },
                 { name: 'company', placeholder: 'Company name', suggestions: companies.map(c => c.name), transform: titleCase },
               ]}
             />
