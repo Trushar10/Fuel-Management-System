@@ -63,7 +63,7 @@ function AutocompleteField({ label, value, onChange, onSelect, suggestions, plac
           className="fc-input"
           style={readOnly ? { background: 'var(--surface)', cursor: 'not-allowed', color: 'var(--muted)' } : {}}
         />
-        {value && !readOnly && (
+        {value && (
           <button type="button" onClick={() => { onSelect(null); setOpen(false); }}
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 16, padding: '0 4px' }}>✕</button>
         )}
