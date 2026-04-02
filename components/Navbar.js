@@ -7,7 +7,6 @@ const NAV_LINKS = [
   { href: '/add', label: 'Trip Entry', icon: '🚛', group: 'Main' },
   { href: '/mobile-refueling', label: 'Mobile Refueling', icon: '🛢️', group: 'Main' },
   { href: '/purchase', label: 'Purchase', icon: '⛽', group: 'Main' },
-  { href: '/mru-entries', label: 'MRU Entries', icon: '📋', group: 'Main' },
   { href: '/creditor-records', label: 'Creditor Records', icon: '🏦', group: 'Main' },
   { href: '/entries', label: 'All Entries', icon: '📋', group: 'Entries' },
   { href: '/master-data', label: 'Master Data', icon: '⚙️', group: 'Setup' },

@@ -163,15 +163,6 @@ export default function EntriesPage() {
           ))}
         </div>
 
-        {/* Month Navigation */}
-        <div className="form-card" style={{ padding: '12px 20px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-          <button type="button" onClick={prevMonth} className="btn btn-secondary" style={{ padding: '6px 14px' }}>◀</button>
-          <span style={{ fontWeight: 600, fontSize: 16, minWidth: 160, textAlign: 'center' }}>
-            {formatMonthLabel(selectedMonth)}
-          </span>
-          <button type="button" onClick={nextMonth} className="btn btn-secondary" style={{ padding: '6px 14px' }}>▶</button>
-        </div>
-
         {/* Stats Bar */}
         <div className="entries-stats">
           <div className="estat"><strong>{loading ? '...' : entries.length}</strong> Total Entries</div>
@@ -202,6 +193,13 @@ export default function EntriesPage() {
           {hasFilters && (
             <button type="button" onClick={() => { clearFilters(); setTimeout(load, 0); }} className="btn btn-ghost">✕ Clear</button>
           )}
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button type="button" onClick={prevMonth} className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 12 }}>◀</button>
+            <span style={{ fontWeight: 600, fontSize: 13, minWidth: 120, textAlign: 'center' }}>
+              {formatMonthLabel(selectedMonth)}
+            </span>
+            <button type="button" onClick={nextMonth} className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 12 }}>▶</button>
+          </div>
         </form>
 
         {loading ? (

@@ -90,6 +90,13 @@ function MasterSection({ title, icon, items, fields, apiUrl, onReload }) {
     onReload();
   };
 
+  const handleDeleteAll = async () => {
+    if (!confirm(`Delete all ${items.length} ${title.toLowerCase()}? This cannot be undone.`)) return;
+    await fetch(apiUrl, { method: 'DELETE' });
+    showToast(`All ${title.toLowerCase()} deleted`, 'success');
+    onReload();
+  };
+
   return (
     <div className="master-card">
       <div className="toast-container">
@@ -101,7 +108,14 @@ function MasterSection({ title, icon, items, fields, apiUrl, onReload }) {
         <div className="master-card-title">
           <span className="master-icon">{icon}</span> {title}
         </div>
-        <span className="master-count">{items.length} records</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span className="master-count">{items.length} records</span>
+          {items.length > 0 && (
+            <button onClick={handleDeleteAll} style={{ background: 'none', border: '1px solid #e74c3c', color: '#e74c3c', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer' }}>
+              Delete All
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="master-list">
