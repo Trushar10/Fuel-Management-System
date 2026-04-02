@@ -38,13 +38,3 @@ export async function DELETE() {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
-
-export async function DELETE() {
-  try {
-    const db = await getDb();
-    await db.execute('DELETE FROM companies');
-    return NextResponse.json({ message: 'All deleted' });
-  } catch (err) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
-  }
-}
