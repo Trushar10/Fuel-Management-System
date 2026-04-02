@@ -29,6 +29,12 @@ export default function EntriesPage() {
     setEntries(entries.filter(e => e.id !== id));
   };
 
+  const handleDeleteAll = async () => {
+    if (!confirm(`Delete all ${entries.length} entries? This cannot be undone.`)) return;
+    await fetch('/api/fuel-entries', { method: 'DELETE' });
+    setEntries([]);
+  };
+
   const clearFilters = () => {
     setSearchTruck('');
     setSearchDriver('');
@@ -55,6 +61,9 @@ export default function EntriesPage() {
           <div className="estat">
             <strong>{loading ? '...' : entries.reduce((a, e) => a + Number(e.distance || 0), 0).toLocaleString()} km</strong> Total Distance
           </div>
+          {!loading && entries.length > 0 && (
+            <button onClick={handleDeleteAll} className="btn btn-ghost" style={{ color: 'var(--red, #e74c3c)', marginLeft: 'auto', fontSize: 12 }}>🗑️ Delete All</button>
+          )}
         </div>
 
         {/* Toolbar */}
