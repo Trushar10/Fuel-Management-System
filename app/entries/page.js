@@ -9,12 +9,16 @@ export default function EntriesPage() {
   const [loading, setLoading] = useState(true);
   const [searchTruck, setSearchTruck] = useState('');
   const [searchDriver, setSearchDriver] = useState('');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
 
   const load = async () => {
     setLoading(true);
     const params = new URLSearchParams();
     if (searchTruck) params.set('truck_no', searchTruck);
     if (searchDriver) params.set('driver_name', searchDriver);
+    if (fromDate) params.set('from_date', fromDate);
+    if (toDate) params.set('to_date', toDate);
     const res = await fetch(`/api/fuel-entries?${params}`);
     const data = await res.json();
     setEntries(data);
@@ -38,9 +42,11 @@ export default function EntriesPage() {
   const clearFilters = () => {
     setSearchTruck('');
     setSearchDriver('');
+    setFromDate('');
+    setToDate('');
   };
 
-  const hasFilters = searchTruck || searchDriver;
+  const hasFilters = searchTruck || searchDriver || fromDate || toDate;
 
   return (
     <>
@@ -75,6 +81,14 @@ export default function EntriesPage() {
           <div className="toolbar-search" style={{ maxWidth: 240 }}>
             <span style={{ color: 'var(--muted)' }}>👤</span>
             <input type="text" placeholder="Search by driver..." value={searchDriver} onChange={e => setSearchDriver(e.target.value)} />
+          </div>
+          <div className="toolbar-search" style={{ maxWidth: 170 }}>
+            <span style={{ color: 'var(--muted)', fontSize: 12 }}>From</span>
+            <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} />
+          </div>
+          <div className="toolbar-search" style={{ maxWidth: 170 }}>
+            <span style={{ color: 'var(--muted)', fontSize: 12 }}>To</span>
+            <input type="date" value={toDate} onChange={e => setToDate(e.target.value)} />
           </div>
           <button type="submit" className="btn btn-primary" style={{ padding: '8px 16px' }}>Search</button>
           {hasFilters && (

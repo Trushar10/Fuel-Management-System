@@ -8,7 +8,7 @@ const NAV_LINKS = [
   { href: '/mobile-refueling', label: 'Mobile Refueling', icon: '🛢️', group: 'Main' },
   { href: '/purchase', label: 'Purchase', icon: '⛽', group: 'Main' },
   { href: '/mru-entries', label: 'MRU Entries', icon: '📋', group: 'Main' },
-  { href: '/creditor-records', label: 'Creditor Records', icon: '🏦', group: 'Finance' },
+  { href: '/creditor-records', label: 'Creditor Records', icon: '🏦', group: 'Main' },
   { href: '/entries', label: 'All Entries', icon: '📋', group: 'Finance' },
   { href: '/master-data', label: 'Master Data', icon: '⚙️', group: 'Setup' },
 ];
